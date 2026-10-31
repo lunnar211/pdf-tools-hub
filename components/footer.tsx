@@ -23,6 +23,10 @@ export function Footer() {
             <li><Link href="/contact" className="inline-flex min-h-[44px] items-center text-[#0f766e] hover:underline dark:text-[#5eead4]">Contact</Link></li>
             <li><Link href="/privacy" className="inline-flex min-h-[44px] items-center text-[#0f766e] hover:underline dark:text-[#5eead4]">Privacy</Link></li>
             <li><Link href="/terms" className="inline-flex min-h-[44px] items-center text-[#0f766e] hover:underline dark:text-[#5eead4]">Terms</Link></li>
+            <li><Link href="/cookies" className="inline-flex min-h-[44px] items-center text-[#0f766e] hover:underline dark:text-[#5eead4]">Cookie Policy</Link></li>
+            <li><Link href="/refund-policy" className="inline-flex min-h-[44px] items-center text-[#0f766e] hover:underline dark:text-[#5eead4]">Refund Policy</Link></li>
+            <li><Link href="/acceptable-use" className="inline-flex min-h-[44px] items-center text-[#0f766e] hover:underline dark:text-[#5eead4]">Acceptable Use</Link></li>
+            <li><Link href="/dmca" className="inline-flex min-h-[44px] items-center text-[#0f766e] hover:underline dark:text-[#5eead4]">DMCA</Link></li>
             <li><Link href="/disclaimer" className="inline-flex min-h-[44px] items-center text-[#0f766e] hover:underline dark:text-[#5eead4]">Disclaimer</Link></li>
             <li><a href={SISTER_SITE_URL} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[44px] items-center text-[#0f766e] hover:underline dark:text-[#5eead4]">AI Studio (our other project)</a></li>
             <li><a href={LEADSFORCEGEN_URL} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[44px] items-center text-[#0f766e] hover:underline dark:text-[#5eead4]">LeadsForceGen (our other project)</a></li>

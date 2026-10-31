@@ -2,13 +2,15 @@ import { PDFDocument } from "pdf-lib";
 import JSZip from "jszip";
 import { z } from "zod";
 import { validateUpload, fileResponse, errorResponse, parseRanges, rangeSchema, MAX_PDF_BYTES } from "@/lib/files";
-import { getFiles, rateLimitGuard, genericError } from "@/lib/api-helpers";
+import { genericError } from "@/lib/api-helpers";
+import { toolGate } from "@/lib/tool-gate";
+import { recordCurrentUserJob } from "@/lib/jobs";
 
 export const runtime = "nodejs";
 
 export async function POST(req: Request) {
   try {
-    const blocked = await rateLimitGuard(req);
+    const blocked = await toolGate(req, "split-pdf");
     if (blocked) return blocked;
     const form = await req.formData();
     const file = form.get("file");
@@ -29,8 +31,10 @@ export async function POST(req: Request) {
       zip.file(`pages-${start}-${end}.pdf`, await part.save());
     }
     const zipBytes = await zip.generateAsync({ type: "uint8array" });
+    await recordCurrentUserJob("split-pdf", "SUCCESS");
     return fileResponse(zipBytes, "split-pdfs.zip", "application/zip");
   } catch {
+    await recordCurrentUserJob("split-pdf", "FAILED");
     return genericError();
   }
 }

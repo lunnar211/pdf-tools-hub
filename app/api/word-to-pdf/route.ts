@@ -2,7 +2,9 @@ import mammoth from "mammoth";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import { z } from "zod";
 import { validateUpload, fileResponse, errorResponse, outputName, MAX_PDF_BYTES } from "@/lib/files";
-import { getFiles, rateLimitGuard, genericError } from "@/lib/api-helpers";
+import { getFiles, genericError } from "@/lib/api-helpers";
+import { toolGate } from "@/lib/tool-gate";
+import { recordCurrentUserJob } from "@/lib/jobs";
 
 export const runtime = "nodejs";
 const schema = z.object({ file: z.instanceof(File) });
@@ -31,7 +33,7 @@ function parseHtml(html: string): Block[] {
 
 export async function POST(req: Request) {
   try {
-    const blocked = await rateLimitGuard(req);
+    const blocked = await toolGate(req, "word-to-pdf");
     if (blocked) return blocked;
     const { files, error } = await getFiles(req, "file");
     if (error) return error;
@@ -81,8 +83,10 @@ export async function POST(req: Request) {
       if (y < MARGIN) { page = doc.addPage([W, H]); y = H - MARGIN; }
     }
     const out = await doc.save();
+    await recordCurrentUserJob("word-to-pdf", "SUCCESS");
     return fileResponse(out, outputName(file.name, "-converted", "pdf"), "application/pdf");
   } catch {
+    await recordCurrentUserJob("word-to-pdf", "FAILED");
     return genericError();
   }
 }

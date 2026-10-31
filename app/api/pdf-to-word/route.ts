@@ -2,7 +2,9 @@ import { Document, Packer, Paragraph, HeadingLevel, TextRun } from "docx";
 import * as pdfjs from "pdfjs-dist/legacy/build/pdf.mjs";
 import { z } from "zod";
 import { validateUpload, fileResponse, errorResponse, outputName, MAX_PDF_BYTES } from "@/lib/files";
-import { getFiles, rateLimitGuard, genericError } from "@/lib/api-helpers";
+import { getFiles, genericError } from "@/lib/api-helpers";
+import { toolGate } from "@/lib/tool-gate";
+import { recordCurrentUserJob } from "@/lib/jobs";
 
 export const runtime = "nodejs";
 
@@ -10,7 +12,7 @@ const schema = z.object({ file: z.instanceof(File) });
 
 export async function POST(req: Request) {
   try {
-    const blocked = await rateLimitGuard(req);
+    const blocked = await toolGate(req, "pdf-to-word");
     if (blocked) return blocked;
     const { files, error } = await getFiles(req, "file");
     if (error) return error;
@@ -53,10 +55,12 @@ export async function POST(req: Request) {
     }
     const doc = new Document({ sections: [{ children }] });
     const out = await Packer.toBuffer(doc);
+    await recordCurrentUserJob("pdf-to-word", "SUCCESS");
     return fileResponse(new Uint8Array(out), outputName(file.name, "-converted", "docx"),
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
   } catch (err) {
     console.error("PDF_TO_WORD_ERROR", err);
+    await recordCurrentUserJob("pdf-to-word", "FAILED");
     return genericError();
   }
 }

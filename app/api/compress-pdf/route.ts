@@ -1,14 +1,16 @@
 import { PDFDocument } from "pdf-lib";
 import { z } from "zod";
 import { validateUpload, fileResponse, errorResponse, MAX_PDF_BYTES } from "@/lib/files";
-import { getFiles, rateLimitGuard, genericError } from "@/lib/api-helpers";
+import { getFiles, genericError } from "@/lib/api-helpers";
+import { toolGate } from "@/lib/tool-gate";
+import { recordCurrentUserJob } from "@/lib/jobs";
 
 export const runtime = "nodejs";
 const schema = z.object({ file: z.instanceof(File) });
 
 export async function POST(req: Request) {
   try {
-    const blocked = await rateLimitGuard(req);
+    const blocked = await toolGate(req, "compress-pdf");
     if (blocked) return blocked;
     const { files, error } = await getFiles(req, "file");
     if (error) return error;
@@ -22,8 +24,10 @@ export async function POST(req: Request) {
     const res = fileResponse(out, file.name.replace(/\.pdf$/i, "") + "-compressed.pdf", "application/pdf");
     res.headers.set("X-Input-Bytes", String(buf.length));
     res.headers.set("X-Output-Bytes", String(out.length));
+    await recordCurrentUserJob("compress-pdf", "SUCCESS");
     return res;
   } catch {
+    await recordCurrentUserJob("compress-pdf", "FAILED");
     return genericError();
   }
 }

@@ -1,12 +1,16 @@
 "use client";
 import Link from "next/link";
 import { useState } from "react";
+import { useSession } from "next-auth/react";
 import { ChevronDown, FileText, ExternalLink } from "lucide-react";
 import { TOOLS, SISTER_SITE_URL, LEADSFORCEGEN_URL } from "@/lib/site";
 import { ThemeToggle } from "./theme-toggle";
 
 export function Navbar() {
   const [open, setOpen] = useState(false);
+  const { data: session } = useSession();
+  const user = session?.user as unknown as Record<string, unknown> | undefined;
+  const isAdmin = user?.role === "ADMIN";
   return (
     <header className="sticky top-0 z-40 border-b-2 border-[#99f6e4] bg-white dark:border-teal-900 dark:bg-slate-950">
       <nav className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3" aria-label="Main navigation">
@@ -39,6 +43,16 @@ export function Navbar() {
             )}
           </div>
           <Link href="/about" className="hidden min-h-[44px] items-center rounded-lg px-3 py-2 font-semibold text-slate-700 hover:bg-[#f0fdfa] sm:flex dark:text-slate-200 dark:hover:bg-teal-950">About</Link>
+          {session ? (
+            <>
+              <Link href="/account" className="flex min-h-[44px] items-center rounded-lg px-3 py-2 font-semibold text-slate-700 hover:bg-[#f0fdfa] dark:text-slate-200 dark:hover:bg-teal-950">Account</Link>
+              {isAdmin && (
+                <Link href="/admin" className="hidden min-h-[44px] items-center rounded-lg px-3 py-2 font-semibold text-slate-700 hover:bg-[#f0fdfa] sm:flex dark:text-slate-200 dark:hover:bg-teal-950">Admin</Link>
+              )}
+            </>
+          ) : (
+            <Link href="/signin" className="flex min-h-[44px] items-center rounded-lg px-3 py-2 font-semibold text-slate-700 hover:bg-[#f0fdfa] dark:text-slate-200 dark:hover:bg-teal-950">Sign in</Link>
+          )}
           <ThemeToggle />
         </div>
       </nav>

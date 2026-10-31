@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  useEffect(() => { const t = window.setTimeout(() => setMounted(true), 0); return () => window.clearTimeout(t); }, []);
   if (!mounted) return <span className="min-h-[44px] min-w-[44px]" aria-hidden="true" />;
   const dark = theme === "dark";
   return (

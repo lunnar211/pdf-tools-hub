@@ -1,4 +1,5 @@
 import { Check } from "lucide-react";
+import Link from "next/link";
 export function PremiumSection() {
   const checkoutUrl = process.env.NEXT_PUBLIC_PREMIUM_CHECKOUT_URL;
   return (
@@ -15,8 +16,9 @@ export function PremiumSection() {
           {checkoutUrl ? (
             <a href={checkoutUrl} className="inline-flex min-h-[44px] items-center rounded-lg bg-[#ea580c] px-5 py-2.5 font-semibold text-white hover:bg-[#c2410c]">Get Premium</a>
           ) : (
-            <p className="font-semibold text-slate-700 dark:text-slate-200">Premium checkout is not open yet. The free tier is fully available today, and no payment details are collected on this site.</p>
+            <Link href="/account" className="inline-flex min-h-[44px] items-center rounded-lg bg-[#ea580c] px-5 py-2.5 font-semibold text-white hover:bg-[#c2410c]">See Premium on my account</Link>
           )}
+          <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">Premium checkout runs through Paddle&apos;s secure hosted checkout (sign-in + age 18+ required). No payment details are collected on this site.</p>
         </div>
       </div>
     </section>

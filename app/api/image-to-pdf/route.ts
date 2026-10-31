@@ -1,14 +1,16 @@
 import { PDFDocument } from "pdf-lib";
 import { z } from "zod";
 import { validateUpload, fileResponse, errorResponse, MAX_IMAGE_BYTES, MAX_IMAGES } from "@/lib/files";
-import { getFiles, rateLimitGuard, genericError } from "@/lib/api-helpers";
+import { getFiles, genericError } from "@/lib/api-helpers";
+import { toolGate } from "@/lib/tool-gate";
+import { recordCurrentUserJob } from "@/lib/jobs";
 
 export const runtime = "nodejs";
 const schema = z.object({ files: z.array(z.instanceof(File)).min(1).max(MAX_IMAGES) });
 
 export async function POST(req: Request) {
   try {
-    const blocked = await rateLimitGuard(req);
+    const blocked = await toolGate(req, "image-to-pdf");
     if (blocked) return blocked;
     const { files, error } = await getFiles(req, "files");
     if (error) return error;
@@ -27,8 +29,10 @@ export async function POST(req: Request) {
       page.drawImage(img, { x: (A4W - w) / 2, y: (A4H - h) / 2, width: w, height: h });
     }
     const out = await doc.save();
+    await recordCurrentUserJob("image-to-pdf", "SUCCESS");
     return fileResponse(out, "images-to-pdf.pdf", "application/pdf");
   } catch {
+    await recordCurrentUserJob("image-to-pdf", "FAILED");
     return genericError();
   }
 }

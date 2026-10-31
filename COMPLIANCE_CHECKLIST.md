@@ -1,0 +1,84 @@
+# Compliance Checklist — PDF Tools Hub
+
+Status key: DONE = implemented + verified in this build (build/tests/probes).
+NEEDS-OWNER-ACTION = cannot be completed by an agent; the exact owner step is
+given. Nothing below is claimed as done unless it was actually verified.
+
+## Google OAuth verification
+
+| Rule | Status | Evidence / path |
+|---|---|---|
+| Sign-in is Google-only, minimal scopes (openid, email, profile) | DONE | `auth.ts` (Google provider, explicit scope params) |
+| No hardcoded credentials; env-only | DONE | `auth.ts`, `.env.example` (placeholders only) |
+| App name, logo, privacy + terms URLs set in Google Cloud console | NEEDS-OWNER-ACTION | Owner: in the OAuth consent screen, set app name "PDF Tools Hub", logo, authorized domain (custom domain when it exists), and links to `https://pdf-tools-hub-nine-lac.vercel.app/privacy` and `/terms` |
+| Authorized redirect URIs (both sites may share one Cloud project) | NEEDS-OWNER-ACTION | Owner: add `https://pdf-tools-hub-nine-lac.vercel.app/api/auth/callback/google` (+ sister site URI if sharing the project) |
+| HONEST OAUTH CAVEAT | DONE (documented) | OAuth works in Testing mode immediately (test users only). Full production verification requires a verified domain the owner controls — a vercel.app subdomain CANNOT be verified. Never claim verification is done. See README "Owner manual steps" §2 |
+
+## AdSense program policies
+
+| Rule | Status | Evidence / path |
+|---|---|---|
+| Original content, required pages (about, contact, privacy, terms, disclaimer, cookies, refund, acceptable-use, DMCA) | DONE | `app/about`, `app/contact`, `app/privacy`, `app/terms`, `app/disclaimer`, `app/cookies`, `app/refund-policy`, `app/acceptable-use`, `app/dmca` |
+| Ads render ONLY after cookie consent | DONE | `components/ad-slot.tsx` (consent + publisher id + admin ads toggle all required) |
+| No ads on login/admin/account/empty pages | DONE | AdSlot is placed only on the public home page; `/signin`, `/admin`, `/account` never render it |
+| Ad slot env-gated, OFF until approval | DONE | `components/ad-slot.tsx` returns null without `NEXT_PUBLIC_ADSENSE_PUBLISHER_ID` |
+| AdSense approval itself | NEEDS-OWNER-ACTION | Google's decision (days to weeks); only then set the publisher id in Vercel |
+
+## Paddle business rules
+
+| Rule | Status | Evidence / path |
+|---|---|---|
+| Paddle Billing is merchant of record; 5% + $0.50 fee | DONE (implemented per verdict) | `lib/paddle.ts`, `app/api/checkout/route.ts`, `app/api/webhooks/paddle/route.ts` |
+| Payouts monthly (balance over $100 on the 1st, sent by the 15th, up to 3 working days) via wire or Payoneer; Nepal not on the unsupported list | DONE (documented for owner) | README "Owner manual steps" §4; no code change needed |
+| FX margin up to 1.5%; possible $15 SWIFT fee | DONE (documented) | `app/refund-policy/page.tsx` + README |
+| Paddle does NOT refund its fee on refunds | DONE (stated) | `app/refund-policy/page.tsx`, `app/admin/money/page.tsx` |
+| No card data stored; only customer/plan/status/invoice/transaction ids | DONE | `app/api/webhooks/paddle/route.ts`, `prisma/schema.prisma` (Payment/Subscription models) |
+| Webhook signature verified + idempotent (duplicate event id → 200 ignored) | DONE (code + SDK unit tests) | `app/api/webhooks/paddle/route.ts`, `tests/unit/paddle.test.ts` |
+| Sandbox test with test cards + sandbox webhook | NEEDS-OWNER-ACTION | Owner: Paddle account → verification (passport as individual) → product + monthly price → payout method (Payoneer/wire) → webhook endpoint `https://pdf-tools-hub-nine-lac.vercel.app/api/webhooks/paddle` → sandbox keys + price id in Vercel → test → switch `PADDLE_ENV` to production |
+| Stripe NOT used (Nepal unsupported; would need a foreign entity) | DONE (not implemented) | — |
+| Lemon Squeezy NOT implemented (backup only; Nepal bank-payout membership unconfirmed, PayPal Nepal send-only, Stripe-migration risk) | DONE (not implemented) | — |
+| eSewa/Khalti NOT implemented (local NPR only, need Nepalese merchant onboarding; future option) | DONE (not implemented) | — |
+
+## Vercel fair use
+
+| Rule | Status | Evidence / path |
+|---|---|---|
+| No abuse of serverless limits; tools are stateless, files never persisted | DONE | Tool routes stream conversions; no background jobs beyond admin cleanup |
+| Deploys without teamId; no existing env vars touched; no empty/placeholder env vars created | DONE | Deploy is GitHub auto-deploy; this build created zero Vercel env vars |
+| Tracked files small (no large binaries, no test screenshots/videos) | DONE with one documented exception | `SECURITY_REPORT.md` note on `package-lock.json` (GitHub deploy path, not the upload shim) |
+
+## Nepal Privacy Act 2018 + Electronic Transactions Act
+
+| Rule | Status | Evidence / path |
+|---|---|---|
+| Data rights (export + delete) on the account page | DONE | `app/account/page.tsx`, `app/api/account/export/route.ts`, `app/api/account/delete/route.ts` |
+| Privacy policy states Nepal Acts alignment (not legal advice) | DONE | `app/privacy/page.tsx` |
+| No ID documents collected; self-declaration only; data minimization (hashed IPs, metadata-only jobs, 90-day job retention) | DONE | `app/onboarding/`, `lib/security.ts`, `lib/jobs.ts`, `app/api/admin/jobs/cleanup/route.ts` |
+
+## Age thresholds (why each exists)
+
+| Threshold | Rule | Basis |
+|---|---|---|
+| Under 13 | Blocked entirely, account deleted, NO data kept | COPPA + GDPR-K lower bound |
+| 13–15 | Account cannot be activated (blocked message, SUSPENDED) | Below the digital-consent age |
+| 16–17 | Free account only, paid checkout blocked | GDPR default digital-consent age is 16; Nepal's Privacy Act 2018 sets no fixed digital-consent age, so 16 is the conservative alignment |
+| 18+ | Paid plans allowed | Contractual capacity |
+
+Implemented in `lib/age.ts` (unit-tested), `app/onboarding/actions.ts`,
+`app/api/checkout/route.ts`.
+
+## Content moderation (honest scope)
+
+| Rule | Status | Evidence / path |
+|---|---|---|
+| Upload moderation = MIME + magic-byte + size checks, abuse controls, flagged-upload metadata view | DONE | `lib/files.ts`, `lib/tool-gate.ts`, `app/admin/usage/page.tsx` |
+| NO prompt moderation claimed (this site has no prompts, no AI) | DONE (explicitly disclaimed) | `app/acceptable-use/page.tsx`, `app/privacy/page.tsx` |
+
+## Shared schema discipline
+
+| Rule | Status | Evidence / path |
+|---|---|---|
+| `prisma/schema.prisma` follows the coordinator's spec verbatim (models, enums, fields) | DONE | `prisma/schema.prisma` |
+| File identical in the sister site | NEEDS-OWNER-ACTION (coordination) | The sister-site builder owns its copy; both must be diffed before the shared DB goes live. This repo's copy is the spec text. |
+| AUTH_SECRET different per site; DATABASE_URL shared | DONE (documented + enforced by guidance) | README "Architecture", `.env.example` |
+| True cross-domain SSO honestly NOT claimed (cookies cannot cross vercel.app domains) | DONE (documented) | README "Architecture" |

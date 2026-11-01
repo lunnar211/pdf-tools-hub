@@ -5,7 +5,7 @@
 // - /admin/* (except /admin/verify-2fa and /admin/setup-2fa): requires a
 //   Supabase session; without one -> /signin. With a session but no fresh
 //   TOTP cookie -> /admin/verify-2fa (role itself is checked by the layout).
-// - /account, /onboarding: require a Supabase session; otherwise -> /signin.
+// - /account, /dashboard, /onboarding: require a Supabase session; otherwise -> /signin.
 //   Age/suspension/role gates live in the pages, not here.
 // - Everything else passes through; tools work for guests.
 // The proxy NEVER imports Prisma or any DB code: it reads the Supabase
@@ -21,8 +21,9 @@ export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const isAdmin = pathname.startsWith("/admin");
   const isAccount = pathname === "/account" || pathname.startsWith("/account/");
+  const isDashboard = pathname === "/dashboard" || pathname.startsWith("/dashboard/");
   const isOnboarding = pathname === "/onboarding" || pathname.startsWith("/onboarding");
-  if (!isAdmin && !isAccount && !isOnboarding) return NextResponse.next();
+  if (!isAdmin && !isAccount && !isDashboard && !isOnboarding) return NextResponse.next();
 
   let response = NextResponse.next({ request: req });
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -68,5 +69,5 @@ export async function proxy(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin", "/admin/:path*", "/account", "/account/:path*", "/onboarding", "/onboarding/:path*"],
+  matcher: ["/admin", "/admin/:path*", "/account", "/account/:path*", "/dashboard", "/dashboard/:path*", "/onboarding", "/onboarding/:path*"],
 };

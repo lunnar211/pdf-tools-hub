@@ -37,6 +37,11 @@ test("account redirects to sign-in when logged out", async ({ page }) => {
   await expect(page).toHaveURL(/\/signin/);
 });
 
+test("dashboard redirects to sign-in when logged out", async ({ page }) => {
+  await page.goto("/dashboard");
+  await expect(page).toHaveURL(/\/signin/);
+});
+
 test("onboarding redirects to sign-in when logged out", async ({ page }) => {
   await page.goto("/onboarding");
   await expect(page).toHaveURL(/\/signin/);
@@ -67,5 +72,6 @@ test("sitemap excludes private pages", async ({ page }) => {
   const text = await page.locator("body").innerText();
   expect(text).not.toContain("/admin");
   expect(text).not.toContain("/account");
+  expect(text).not.toContain("/dashboard");
   expect(text).not.toContain("/signin");
 });

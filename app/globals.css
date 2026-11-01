@@ -2,6 +2,20 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/*
+ * DESIGN SYSTEM — PDF Tools Hub (flat, friendly, trustworthy).
+ * Palette (teal primary + orange action, from the ui-ux-pro-max match for a
+ * productivity SaaS): primary #0d9488, primary-dark #0f766e, secondary
+ * #14b8a6, accent #ea580c, accent-dark #c2410c, surface #f0fdfa, card
+ * #ffffff, line #99f6e4, muted #475569, danger #dc2626. Type: Plus Jakarta
+ * Sans (next/font, display swap) with system fallbacks; base 16px,
+ * line-height 1.5. Rules: mobile-first, 44px minimum touch targets,
+ * visible orange focus ring, reduced-motion respected, no layout shift
+ * (reserved space for progress/results), SVG icons only (lucide), sentence
+ * case, no invented numbers. Components: Button (primary/accent/outline/
+ * ghost) in components/ui/button.tsx; cards are rounded-2xl border-2 line
+ * on card bg. New pages must reuse these tokens, never raw one-off hex.
+ */
 @theme inline {
   --color-primary: #0d9488;
   --color-primary-dark: #0f766e;
@@ -14,6 +28,28 @@
   --color-muted: #475569;
   --color-danger: #dc2626;
   --font-sans: var(--font-jakarta), ui-sans-system, system-ui, sans-serif;
+}
+
+@layer base {
+  /* Consistent form controls site-wide; Tailwind utilities on individual
+   * inputs still win over these base styles (layers), so per-page classes
+   * like border-[#99f6e4] keep working. */
+  input, select, textarea {
+    min-height: 44px;
+    border-radius: 0.5rem;
+    border: 2px solid #99f6e4;
+    background: #ffffff;
+    padding: 0.625rem 0.75rem;
+    font-size: 1rem;
+    color: #0f172a;
+  }
+  .dark input, .dark select, .dark textarea {
+    border-color: #134e4a;
+    background: #020617;
+    color: #f1f5f9;
+  }
+  button:not(:disabled) { cursor: pointer; }
+  ::selection { background: #99f6e4; color: #134e4a; }
 }
 
 html { scroll-behavior: smooth; }

@@ -6,6 +6,7 @@ import { getQuota } from "@/lib/settings";
 import { countJobsToday } from "@/lib/jobs";
 import { canBuyPaid } from "@/lib/age";
 import { ExportButton, DeleteButton, CheckoutButton, SignOutButton } from "./account-actions";
+import { LocalHistory } from "@/components/local-history";
 
 export const metadata: Metadata = {
   title: "My account | PDF Tools Hub",
@@ -74,6 +75,15 @@ export default async function Page() {
         <div className="mt-4">
           <CheckoutButton alreadyPremium={plan === "PREMIUM"} canBuy={canBuy} />
         </div>
+      </section>
+
+      <section aria-label="Recent conversions on this device" className="mt-6 rounded-2xl border-2 border-[#99f6e4] bg-white p-5 dark:border-teal-900 dark:bg-slate-900">
+        <h2 className="text-xl font-bold">Recent conversions (this device)</h2>
+        <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+          Files you converted in this browser are kept here for 1 hour so you can download them again.
+          They are stored on this device only — never on the server — so they do not appear on other devices.
+        </p>
+        <LocalHistory />
       </section>
 
       <section aria-label="Job history" className="mt-6 rounded-2xl border-2 border-[#99f6e4] bg-white p-5 dark:border-teal-900 dark:bg-slate-900">

@@ -263,3 +263,41 @@ deploy path. No other tracked file exceeds 16 KB.
 - Pre-existing lint errors in `theme-toggle`/`cookie-banner` (sync setState in
   effect) fixed with async callbacks; lint now exits 0 (one pre-existing
   false-positive warning remains: jsx-a11y flagging lucide's `Image` icon).
+
+## Addendum 2026-11-01 — browser-tools improvement (image-to-PDF browser-first + 6 new tools)
+
+- Browser conversion (image-to-pdf, pdf-to-jpg, rotate, organize, watermark,
+  page numbers, OCR) runs fully client-side; files never leave the device.
+  Verified: pdf-lib / tesseract code lives in lazy async chunks, not the
+  initial page chunk (chunk inspection during build review).
+- Rate limits cover browser tools too: `POST /api/usage/count` runs the full
+  tool gate (maintenance / tool-off / blocked IP / suspended / quota) before
+  conversion; `GET /api/usage/remaining` peeks without consuming. Guest counts
+  via the in-memory fallback remain best-effort across serverless instances
+  (documented); signed-in counts are exact via Job rows.
+- Magic-byte validation extended client-side (WebP RIFF/WEBP, BMP BM, HEIC
+  ftyp brands, ZIP for docx) and re-checked server-side on every server route.
+  UploadZone validates by content, not extension.
+- OCR assets are vendored same-origin (`public/tesseract/`): worker, 3 core
+  wasm variants, English traineddata. No CDN dependency. CSP: `worker-src
+  'self' blob:` (heic2any blob workers) + `'wasm-unsafe-eval'` in script-src
+  (wasm compilation only — JS eval is still not allowed). Verified end-to-end
+  in sandboxed Chromium (HELLO OCR recognised from a rendered page).
+- Server files verified memory-only (no `fs` writes in any route) — stronger
+  than the old "/tmp with auto-delete" wording, which the docs now correct.
+- ErrorLog is now actually written: all 6 server tool routes call `logError`
+  (best-effort, fire-and-forget) in their catch blocks; user responses stay
+  generic.
+- Fixed during this loop: homepage Premium section claimed "HD export" and
+  "Priority processing" (neither implemented) — replaced with true benefits
+  (1,000/day, no ads); AdSlot now honours Premium (no ads for Premium users),
+  which the account page already promised but the code did not enforce.
+- Deliberately NOT shipped: PDF password protection / unlock. pdf-lib cannot
+  encrypt PDFs (or open encrypted ones) and no sound serverless encryption
+  library exists — a password field would be fake security. Documented on the
+  homepage FAQ, the OCR tool page, and in the final report.
+- Known limits (not vulnerabilities): HEIC EXIF rotation is best-effort
+  (heic2any/libheif may not apply the orientation box; manual rotate buttons
+  cover it); OCR is English-only, first 10 pages; WebP/BMP/HEIC have no server
+  fallback (server pdf-lib cannot decode them either) — failed files error
+  per-file instead of failing the batch.

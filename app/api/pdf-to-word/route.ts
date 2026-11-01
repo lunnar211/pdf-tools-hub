@@ -5,6 +5,7 @@ import { validateUpload, fileResponse, errorResponse, outputName, MAX_PDF_BYTES 
 import { getFiles, genericError } from "@/lib/api-helpers";
 import { toolGate } from "@/lib/tool-gate";
 import { recordCurrentUserJob } from "@/lib/jobs";
+import { logError } from "@/lib/admin";
 
 export const runtime = "nodejs";
 
@@ -60,6 +61,7 @@ export async function POST(req: Request) {
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
   } catch (err) {
     console.error("PDF_TO_WORD_ERROR", err);
+    void logError("pdf-to-word", err instanceof Error ? err.message : "unknown error");
     await recordCurrentUserJob("pdf-to-word", "FAILED");
     return genericError();
   }

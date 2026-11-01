@@ -5,6 +5,7 @@ import { validateUpload, fileResponse, errorResponse, parseRanges, rangeSchema, 
 import { genericError } from "@/lib/api-helpers";
 import { toolGate } from "@/lib/tool-gate";
 import { recordCurrentUserJob } from "@/lib/jobs";
+import { logError } from "@/lib/admin";
 
 export const runtime = "nodejs";
 
@@ -33,7 +34,8 @@ export async function POST(req: Request) {
     const zipBytes = await zip.generateAsync({ type: "uint8array" });
     await recordCurrentUserJob("split-pdf", "SUCCESS");
     return fileResponse(zipBytes, "split-pdfs.zip", "application/zip");
-  } catch {
+  } catch (err) {
+    void logError("split-pdf", err instanceof Error ? err.message : "unknown error");
     await recordCurrentUserJob("split-pdf", "FAILED");
     return genericError();
   }

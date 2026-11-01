@@ -5,6 +5,7 @@ import { validateUpload, fileResponse, errorResponse, outputName, MAX_PDF_BYTES 
 import { getFiles, genericError } from "@/lib/api-helpers";
 import { toolGate } from "@/lib/tool-gate";
 import { recordCurrentUserJob } from "@/lib/jobs";
+import { logError } from "@/lib/admin";
 
 export const runtime = "nodejs";
 const schema = z.object({ file: z.instanceof(File) });
@@ -85,7 +86,8 @@ export async function POST(req: Request) {
     const out = await doc.save();
     await recordCurrentUserJob("word-to-pdf", "SUCCESS");
     return fileResponse(out, outputName(file.name, "-converted", "pdf"), "application/pdf");
-  } catch {
+  } catch (err) {
+    void logError("word-to-pdf", err instanceof Error ? err.message : "unknown error");
     await recordCurrentUserJob("word-to-pdf", "FAILED");
     return genericError();
   }

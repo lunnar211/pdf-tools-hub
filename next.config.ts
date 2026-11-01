@@ -9,10 +9,15 @@ const SUPABASE_HOST = "https://omnqidmauvloedscncir.supabase.co";
 
 const csp = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' https://va.vercel-scripts.com",
+  // 'wasm-unsafe-eval' allows WebAssembly compilation (OCR's tesseract core)
+  // without allowing eval() for JavaScript.
+  "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://va.vercel-scripts.com",
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https://lh3.googleusercontent.com",
   "font-src 'self'",
+  // heic2any decodes HEIC in blob workers; OCR assets are same-origin, so
+  // no CDN host is needed for workers or connections.
+  "worker-src 'self' blob:",
   `connect-src 'self' https://va.vercel-scripts.com ${SUPABASE_HOST}`,
   "frame-ancestors 'none'",
   "object-src 'none'",

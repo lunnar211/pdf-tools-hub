@@ -86,3 +86,16 @@ Implemented in `lib/age.ts` (unit-tested), `app/onboarding/actions.ts`,
 | File database-compatible in the sister site | NEEDS-OWNER-ACTION (coordination) | The sister-site builder owns its copy; both must be diffed before the shared DB goes live, and the schema is pushed ONCE from either repo. |
 | TOTP_ENCRYPTION_KEY set per site (replaces AUTH_SECRET for TOTP/IP purposes); DATABASE_URL shared (Supabase pooler) | DONE (documented + enforced by guidance) | README "Architecture", `.env.example` |
 | True cross-domain SSO honestly NOT claimed (cookies cannot cross vercel.app domains) | DONE (documented) | README "Architecture" |
+
+## Addendum 2026-11-01 — browser-tools improvement
+
+| Rule | Status | Evidence / path |
+|---|---|---|
+| Browser tools never upload files (privacy claim matches code) | DONE | `components/image-to-pdf-tool.tsx`, `lib/pdf-client.ts`, `lib/ocr.ts` (dynamic imports, no fetch of file bytes) |
+| Server fallback files memory-only, never stored | DONE | `app/api/image-to-pdf/route.ts` (buffer-only); no `fs` writes in any route |
+| Rate limits apply to browser tools, not just server routes | DONE | `app/api/usage/count/route.ts`, `lib/usage.ts` |
+| No invented prices on pricing page (price shown at Paddle checkout) | DONE | `app/pricing/page.tsx` (quotas from SiteSetting; no price numbers) |
+| No fake password protection / unlock | DONE (explicitly declined) | Homepage FAQ, OCR tool page note, README "Browser tools" |
+| OCR: no file leaves the device; assets vendored same-origin, no CDN | DONE | `public/tesseract/*`, `lib/ocr.ts` |
+| Conversion history is on-device only (1h), server stays metadata-only | DONE | `lib/history.ts`, `components/local-history.tsx` |
+| `public/tesseract/*` (~23 MB) exceeds the 120 KB shim-file guideline | DOCUMENTED EXCEPTION | README "Deploy": safe only because this repo deploys via GitHub auto-deploy, never the base64 CLI shim |

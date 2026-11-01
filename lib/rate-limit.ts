@@ -50,6 +50,26 @@ export async function checkRateLimit(ip: string): Promise<{ allowed: boolean; re
   }
 }
 
+/**
+ * Read the remaining guest quota WITHOUT consuming one. Used by the
+ * free-limit counter (GET /api/usage/remaining). The in-memory fallback
+ * reads the entry without incrementing; Upstash uses getRemaining.
+ */
+export async function peekRateLimit(ip: string): Promise<{ remaining: number }> {
+  const rl = getLimiter();
+  if (rl) {
+    try {
+      const res = (await rl.getRemaining(ip)) as unknown as { remaining?: number };
+      if (typeof res?.remaining === "number") return { remaining: res.remaining };
+    } catch {
+      // fall through to the memory peek
+    }
+  }
+  const entry = mem.get(ip);
+  if (!entry || Date.now() >= entry.resetAt) return { remaining: FREE_DAILY_LIMIT };
+  return { remaining: Math.max(0, FREE_DAILY_LIMIT - entry.count) };
+}
+
 export function getClientIp(req: Request): string {
   const fwd = req.headers.get("x-forwarded-for");
   if (fwd) return fwd.split(",")[0].trim();

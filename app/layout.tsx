@@ -17,6 +17,7 @@ export const metadata: Metadata = {
     title: "PDF Tools Hub — Free PDF Tools Online",
     description: "Free PDF tools: convert PDF to Word, Word to PDF, images to PDF, merge, split and compress PDFs.",
     type: "website",
+    images: [{ url: "/og/default.jpg", width: 1200, height: 630 }],
   },
 };
 

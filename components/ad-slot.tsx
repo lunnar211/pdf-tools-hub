@@ -12,9 +12,17 @@ export function AdSlot() {
     let consent = false;
     try { consent = localStorage.getItem("pth-cookie-choice") === "accepted"; } catch { consent = false; }
     if (!id || !consent) return;
-    fetch("/api/public-settings")
-      .then((r) => r.json())
-      .then((d) => { if (d.adsEnabled !== false) setShow(true); })
+    // Premium users never see ads (this is what the account page promises).
+    // Guests and free users see the slot when ads are enabled in settings.
+    fetch("/api/account/me")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((me) => {
+        if (me?.plan === "PREMIUM") return;
+        return fetch("/api/public-settings")
+          .then((r) => r.json())
+          .then((d) => { if (d.adsEnabled !== false) setShow(true); })
+          .catch(() => undefined);
+      })
       .catch(() => undefined);
   }, [id]);
   if (!id || !show) return null;

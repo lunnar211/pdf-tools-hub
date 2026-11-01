@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
 import { ToolShell } from "./tool-shell";
 import { AdSlot } from "./ad-slot";
+import { PDF_KINDS } from "@/lib/file-detect";
+import type { ToolSlug } from "@/lib/site";
 import type { ToolContent } from "@/lib/tool-content";
 
 export function toolMetadata(c: ToolContent): Metadata {
   return {
     title: `${c.title} — Free Online | PDF Tools Hub`,
     description: c.meta,
-    openGraph: { title: `${c.title} | PDF Tools Hub`, description: c.meta, type: "website" },
+    openGraph: { title: `${c.title} | PDF Tools Hub`, description: c.meta, type: "website", images: [{ url: `/og/${c.slug}.jpg`, width: 1200, height: 630 }] },
   };
 }
 
@@ -30,6 +32,9 @@ export function ToolPage({ c, rangesField }: { c: ToolContent; rangesField?: boo
       <p className="mt-2 text-sm font-medium text-slate-600 dark:text-slate-300">{c.limits}</p>
       <div className="mt-6">
         <ToolShell endpoint={c.endpoint} accept={c.accept} multiple={c.multiple} fieldName={c.fieldName} resultLabel={c.resultLabel}
+          toolSlug={c.slug as ToolSlug}
+          allowedKinds={c.slug === "word-to-pdf" ? ["zip"] : PDF_KINDS}
+          maxBytes={25 * 1024 * 1024} maxFiles={c.multiple ? 20 : 1}
           extraFields={rangesField ? (
             <div className="mt-4">
               <label htmlFor="ranges" className="block font-bold text-slate-900 dark:text-white">Page ranges</label>
@@ -68,7 +73,8 @@ export function ToolPage({ c, rangesField }: { c: ToolContent; rangesField?: boo
         </div>
       </section>
       <p className="mt-10 rounded-xl bg-[#f0fdfa] p-4 text-sm text-slate-600 dark:bg-teal-950 dark:text-slate-300">
-        Files are processed on our server and deleted immediately after processing (max 60 minutes in any case); we never list or share them. Uploaded files are never stored publicly.
+        Files are processed in memory on our server and never stored — nothing is written to disk.
+        Uploaded files are never listed or shared publicly.
       </p>
     </main>
   );

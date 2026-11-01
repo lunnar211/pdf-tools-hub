@@ -4,6 +4,7 @@ import { validateUpload, fileResponse, errorResponse, MAX_PDF_BYTES } from "@/li
 import { getFiles, genericError } from "@/lib/api-helpers";
 import { toolGate } from "@/lib/tool-gate";
 import { recordCurrentUserJob } from "@/lib/jobs";
+import { logError } from "@/lib/admin";
 
 export const runtime = "nodejs";
 const schema = z.object({ files: z.array(z.instanceof(File)).min(2).max(20) });
@@ -27,7 +28,8 @@ export async function POST(req: Request) {
     const bytes = await out.save();
     await recordCurrentUserJob("merge-pdf", "SUCCESS");
     return fileResponse(bytes, "merged.pdf", "application/pdf");
-  } catch {
+  } catch (err) {
+    void logError("merge-pdf", err instanceof Error ? err.message : "unknown error");
     await recordCurrentUserJob("merge-pdf", "FAILED");
     return genericError();
   }

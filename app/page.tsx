@@ -121,6 +121,21 @@ export default function Home() {
           </a>
         </div>
       </section>
+
+      <section className="mx-auto max-w-6xl px-4 pb-16" aria-label="Android app">
+        <div className="rounded-2xl border-2 border-[#99f6e4] bg-white p-6 dark:border-teal-900 dark:bg-slate-900">
+          <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white">PDF Tools Hub on Android</h2>
+          <p className="mt-2 text-slate-600 dark:text-slate-300">
+            The Android app is this website in an app: the same PDF tools, the same login, the same data. Download the APK, allow install from unknown sources once on your phone, then sign in with your usual account.
+          </p>
+          <a href="https://github.com/lunnar211/android-apps/releases/latest/download/pdf-tools-hub-debug.apk" className="mt-4 inline-flex min-h-[44px] items-center rounded-xl bg-[#0d9488] px-5 font-bold text-white">
+            Download for Android (.apk)
+          </a>
+          <p className="mt-3 text-sm">
+            <a href="https://github.com/lunnar211/android-apps/releases" target="_blank" rel="noopener noreferrer" className="underline">All Android apps on GitHub</a>
+          </p>
+        </div>
+      </section>
     </main>
   );
 }

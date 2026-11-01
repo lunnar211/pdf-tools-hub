@@ -16,6 +16,8 @@ const NAV = [
   { href: "/admin/money", label: "Money" },
   { href: "/admin/usage", label: "Usage & abuse" },
   { href: "/admin/settings", label: "Settings" },
+  { href: "/admin/database", label: "Database" },
+  { href: "/admin/providers", label: "Tokens & providers" },
   { href: "/admin/support", label: "Support inbox" },
   { href: "/admin/logs", label: "Logs" },
 ];

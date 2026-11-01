@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { auth } from "@/auth";
+import { getCurrentUser } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { OnboardingForm } from "./form";
 
@@ -12,10 +12,8 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function Page() {
-  const session = await auth();
-  if (!session?.user) redirect("/signin");
-  const email = String(session.user.email ?? "");
-  const dbUser = prisma ? await prisma.user.findUnique({ where: { email } }).catch(() => null) : null;
+  const { supabaseUser, dbUser } = await getCurrentUser();
+  if (!supabaseUser) redirect("/signin");
   if (dbUser?.ageConfirmed) redirect("/account");
   return (
     <main className="mx-auto max-w-md px-4 py-10">

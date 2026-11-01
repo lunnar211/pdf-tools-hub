@@ -6,7 +6,7 @@ export default function Page() {
     <LegalPage title="Cookie Policy">
       <P>We use as few cookies as possible. Nothing here tracks you across other websites.</P>
       <H>Essential cookies (always on)</H>
-      <P>Sign-in session cookies from Auth.js keep you signed in and carry your plan and admin/TOTP state inside an encrypted token. The theme preference (light/dark) is stored locally in your browser. Without these, sign-in and theme choice cannot work.</P>
+      <P>Sign-in session cookies from Supabase Auth keep you signed in. Your plan, role, and age state live in this site&apos;s database (not in the cookie), and admin two-factor state is a separate signed, httpOnly cookie that expires after 12 hours. The theme preference (light/dark) is stored locally in your browser. Without these, sign-in and theme choice cannot work.</P>
       <H>Analytics (only after you accept)</H>
       <P>Vercel Analytics loads only after you press Accept in the cookie banner. It counts page views in aggregate; it does not follow you to other sites. Declining means it never loads.</P>
       <H>Advertising (only after you accept, and only if approved)</H>

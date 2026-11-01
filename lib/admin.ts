@@ -3,9 +3,15 @@
 // users, notes, support inbox, view logs; NO plan changes, NO deletes, NO
 // money edits, NO settings), FINANCE (view-only money + expenses view; NO
 // edits, NO users, NO settings).
+// Identity comes from Supabase Auth; role/adminRole come from the Prisma
+// User row; the TOTP second step comes from the signed pth-totp cookie
+// (lib/totp-session.ts). All three are checked SERVER-side here, on every
+// admin page and API route — never client-side.
+import { cookies } from "next/headers";
 import { prisma } from "./prisma";
 import { hashIp } from "./security";
-import { auth } from "@/auth";
+import { getCurrentUser } from "./supabase/server";
+import { parseTotpVerifiedAt, TOTP_COOKIE_NAME } from "./totp-session";
 
 export type AdminRoleName = "SUPER" | "SUPPORT" | "FINANCE";
 
@@ -18,15 +24,20 @@ export type AdminSession = {
 };
 
 export async function getAdminSession(): Promise<AdminSession | null> {
-  const session = await auth();
-  const u = session?.user as unknown as Record<string, unknown> | undefined;
-  if (!u || u.role !== "ADMIN" || !u.adminRole) return null;
+  const { supabaseUser, dbUser } = await getCurrentUser();
+  if (!supabaseUser || !dbUser || dbUser.role !== "ADMIN" || !dbUser.adminRole) return null;
+  let totpVerifiedAt: string | null = null;
+  try {
+    totpVerifiedAt = parseTotpVerifiedAt((await cookies()).get(TOTP_COOKIE_NAME)?.value);
+  } catch {
+    totpVerifiedAt = null;
+  }
   return {
-    userId: String(u.id ?? ""),
-    email: String(u.email ?? ""),
+    userId: dbUser.id,
+    email: dbUser.email,
     role: "ADMIN",
-    adminRole: u.adminRole as AdminRoleName,
-    totpVerifiedAt: (u.totpVerifiedAt as string | null) ?? null,
+    adminRole: dbUser.adminRole as AdminRoleName,
+    totpVerifiedAt,
   };
 }
 

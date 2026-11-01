@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { auth } from "@/auth";
+import { getCurrentUser } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { getQuota } from "@/lib/settings";
 import { countJobsToday } from "@/lib/jobs";
@@ -15,12 +15,15 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function Page() {
-  const session = await auth();
-  if (!session?.user) redirect("/signin");
-  const user = session.user as unknown as Record<string, unknown>;
-  const email = String(user.email ?? "");
-  const plan = String(user.plan ?? "FREE");
-  const dbUser = prisma ? await prisma.user.findUnique({ where: { email } }).catch(() => null) : null;
+  const { supabaseUser, dbUser } = await getCurrentUser();
+  if (!supabaseUser) redirect("/signin");
+  const email = supabaseUser.email ?? "";
+  const plan = dbUser?.plan ?? "FREE";
+  const user = {
+    email,
+    name: dbUser?.name ?? (supabaseUser.user_metadata?.full_name as string | undefined) ?? email,
+    image: dbUser?.image ?? (supabaseUser.user_metadata?.avatar_url as string | undefined) ?? null,
+  };
   const jobs = dbUser
     ? await prisma!.job.findMany({ where: { userId: dbUser.id }, orderBy: { createdAt: "desc" }, take: 50 }).catch(() => [])
     : [];
@@ -47,7 +50,7 @@ export default async function Page() {
             <img src={user.image} alt="" width={56} height={56} className="rounded-full" referrerPolicy="no-referrer" />
           ) : null}
           <div>
-            <p className="text-xl font-bold">{String(user.name ?? email)}</p>
+            <p className="text-xl font-bold">{user.name}</p>
             <p className="text-slate-600 dark:text-slate-300">{email}</p>
           </div>
         </div>
@@ -98,7 +101,11 @@ export default async function Page() {
       <section aria-label="Your data" className="mt-6 rounded-2xl border-2 border-[#99f6e4] bg-white p-5 dark:border-teal-900 dark:bg-slate-900">
         <h2 className="text-xl font-bold">Your data</h2>
         <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-          Export downloads your profile, jobs, subscriptions, and payments as JSON. Delete removes them permanently.
+          Export downloads your profile, jobs, subscriptions, and payments as JSON. Delete removes them permanently
+          from this site&apos;s database. Note: delete removes your site profile, but your Google sign-in identity
+          itself lives in Supabase Auth and can only be removed by the site owner from the Supabase dashboard (the
+          browser key cannot delete Auth users) — after deleting here, sign out and contact support if you also want
+          the sign-in identity removed.
         </p>
         <div className="mt-4 flex flex-wrap gap-3">
           <ExportButton />

@@ -42,6 +42,15 @@ export async function POST(req: Request) {
 
 async function resolveUserId(data: Record<string, unknown>): Promise<string | null> {
   const custom = data.custom_data as Record<string, unknown> | undefined;
+  // Supabase re-key: prefer the Supabase user id (resolves via the
+  // supabaseId column, so a buyer is found even if their Prisma id ever
+  // changes), then the legacy Prisma userId, then customer/subscription.
+  // custom_data comes from a signature-verified Paddle webhook, never from
+  // a client, so trusting it here is the same trust as before.
+  if (typeof custom?.supabaseId === "string" && prisma) {
+    const bySupabase = await prisma.user.findUnique({ where: { supabaseId: custom.supabaseId } }).catch(() => null);
+    if (bySupabase) return bySupabase.id;
+  }
   if (typeof custom?.userId === "string") return custom.userId;
   const customerId = data.customer_id as string | undefined;
   const subId = (data.subscription_id as string | undefined) ?? (data.id as string | undefined);

@@ -1,49 +1,21 @@
-// Next.js 16 proxy (the renamed middleware convention). Runs on the Node.js
-// runtime; it is JWT-only and NEVER imports Prisma or any DB code, so admin
-// and onboarding gates work with no DB round-trip.
-// Rules:
+// Next.js 16 proxy (the renamed middleware convention), Node.js runtime.
+// Supabase Auth edition — replaces the old Auth.js JWT decoding.
+// Rules (optimistic first gate ONLY; full authorization is re-checked
+// server-side in every layout, page, and API route — see lib/admin.ts):
 // - /admin/* (except /admin/verify-2fa and /admin/setup-2fa): requires a
-//   session + role ADMIN + adminRole + totpVerifiedAt within the last 12h.
-//   Missing session -> /signin; admin without fresh TOTP -> /admin/verify-2fa;
-//   non-admin -> / (never an admin page).
-// - /account, /onboarding: require a session; signed-in users without
-//   ageConfirmed are sent to /onboarding (except /onboarding itself).
+//   Supabase session; without one -> /signin. With a session but no fresh
+//   TOTP cookie -> /admin/verify-2fa (role itself is checked by the layout).
+// - /account, /onboarding: require a Supabase session; otherwise -> /signin.
+//   Age/suspension/role gates live in the pages, not here.
 // - Everything else passes through; tools work for guests.
+// The proxy NEVER imports Prisma or any DB code: it reads the Supabase
+// session from cookies and the signed TOTP cookie only. When Supabase env
+// vars are unset there can be no session, so guarded paths redirect to
+// /signin, which shows the honest "not configured" state.
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { decode } from "@auth/core/jwt";
-
-const SESSION_COOKIES = ["__Secure-authjs.session-token", "authjs.session-token"];
-
-type TokenPayload = {
-  role?: string;
-  adminRole?: string | null;
-  totpVerifiedAt?: string | null;
-  ageConfirmed?: boolean;
-  status?: string;
-};
-
-async function readToken(req: NextRequest): Promise<TokenPayload | null> {
-  const secret = process.env.AUTH_SECRET;
-  if (!secret) return null;
-  for (const name of SESSION_COOKIES) {
-    const raw = req.cookies.get(name)?.value;
-    if (!raw) continue;
-    try {
-      const payload = await decode({ token: raw, secret, salt: name });
-      if (payload) return payload as unknown as TokenPayload;
-    } catch {
-      // try the next cookie name
-    }
-  }
-  return null;
-}
-
-function totpFresh(t: string | null | undefined): boolean {
-  if (!t) return false;
-  const ms = new Date(t).getTime();
-  return Number.isFinite(ms) && Date.now() - ms < 12 * 60 * 60 * 1000;
-}
+import { createServerClient } from "@supabase/ssr";
+import { totpCookieFresh, TOTP_COOKIE_NAME } from "./lib/totp-session";
 
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
@@ -52,41 +24,47 @@ export async function proxy(req: NextRequest) {
   const isOnboarding = pathname === "/onboarding" || pathname.startsWith("/onboarding");
   if (!isAdmin && !isAccount && !isOnboarding) return NextResponse.next();
 
-  let token: TokenPayload | null = null;
-  try {
-    token = await readToken(req);
-  } catch {
-    token = null;
-  }
+  let response = NextResponse.next({ request: req });
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   const signin = new URL("/signin", req.url);
+  if (!url || !key) return NextResponse.redirect(signin);
 
-  if (!token) {
-    // No session at all: auth pages stay reachable only if they are the
-    // TOTP/setup pages is NOT the case here — all guarded paths need login.
-    return NextResponse.redirect(signin);
+  const supabase = createServerClient(url, key, {
+    cookies: {
+      getAll() {
+        return req.cookies.getAll();
+      },
+      setAll(cookiesToSet) {
+        cookiesToSet.forEach(({ name, value, options }) => {
+          req.cookies.set(name, value);
+          response = NextResponse.next({ request: req });
+          response.cookies.set(name, value, options);
+        });
+      },
+    },
+  });
+  let user = null;
+  try {
+    const { data } = await supabase.auth.getUser();
+    user = data?.user ?? null;
+  } catch {
+    user = null;
   }
-  if (token.status === "SUSPENDED") {
-    // Suspended users can only see onboarding (which shows the blocked state).
-    if (isOnboarding) return NextResponse.next();
-    return NextResponse.redirect(new URL("/onboarding", req.url));
-  }
+  if (!user) return NextResponse.redirect(signin);
+
   if (isAdmin) {
-    if (token.role !== "ADMIN" || !token.adminRole) {
-      return NextResponse.redirect(new URL("/", req.url));
-    }
     if (pathname === "/admin/verify-2fa" || pathname === "/admin/setup-2fa") {
-      return NextResponse.next();
+      return response;
     }
-    if (!totpFresh(token.totpVerifiedAt)) {
+    // Fast TOTP gate; the admin layout re-checks role + TOTP server-side,
+    // so a non-admin with a stray cookie still never sees an admin page.
+    if (!totpCookieFresh(req.cookies.get(TOTP_COOKIE_NAME)?.value)) {
       return NextResponse.redirect(new URL("/admin/verify-2fa", req.url));
     }
-    return NextResponse.next();
+    return response;
   }
-  // /account and /onboarding: enforce onboarding completion.
-  if (!token.ageConfirmed && !isOnboarding) {
-    return NextResponse.redirect(new URL("/onboarding", req.url));
-  }
-  return NextResponse.next();
+  return response;
 }
 
 export const config = {

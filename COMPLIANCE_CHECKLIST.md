@@ -4,15 +4,18 @@ Status key: DONE = implemented + verified in this build (build/tests/probes).
 NEEDS-OWNER-ACTION = cannot be completed by an agent; the exact owner step is
 given. Nothing below is claimed as done unless it was actually verified.
 
-## Google OAuth verification
+## Google sign-in via Supabase Auth (replaces the old Auth.js OAuth section, 2026-11-01)
 
 | Rule | Status | Evidence / path |
 |---|---|---|
-| Sign-in is Google-only, minimal scopes (openid, email, profile) | DONE | `auth.ts` (Google provider, explicit scope params) |
-| No hardcoded credentials; env-only | DONE | `auth.ts`, `.env.example` (placeholders only) |
-| App name, logo, privacy + terms URLs set in Google Cloud console | NEEDS-OWNER-ACTION | Owner: in the OAuth consent screen, set app name "PDF Tools Hub", logo, authorized domain (custom domain when it exists), and links to `https://pdf-tools-hub-nine-lac.vercel.app/privacy` and `/terms` |
-| Authorized redirect URIs (both sites may share one Cloud project) | NEEDS-OWNER-ACTION | Owner: add `https://pdf-tools-hub-nine-lac.vercel.app/api/auth/callback/google` (+ sister site URI if sharing the project) |
-| HONEST OAUTH CAVEAT | DONE (documented) | OAuth works in Testing mode immediately (test users only). Full production verification requires a verified domain the owner controls — a vercel.app subdomain CANNOT be verified. Never claim verification is done. See README "Owner manual steps" §2 |
+| Sign-in is Google-only via Supabase Auth, minimal scopes (openid, email, profile) | DONE (code; live login NOT yet proven) | `app/signin/signin-form.tsx` (`signInWithOAuth({ provider: "google" })`), `app/auth/callback/route.ts` |
+| No new Google Cloud OAuth client; reuse the existing "LeadForge" Supabase project's Google provider | DONE (by design) | README "Architecture"; no `GOOGLE_CLIENT_*` env vars anywhere in code |
+| No hardcoded credentials; env-only; anon key is public by design, never committed | DONE | `lib/supabase/client.ts`, `lib/supabase/server.ts`, `.env.example` (placeholders only) |
+| Supabase redirect URL allowlisted | NEEDS-OWNER-ACTION | Owner: Supabase Dashboard → Authentication → URL Configuration → add `https://pdf-tools-hub-nine-lac.vercel.app/auth/callback` (+ `http://localhost:3000/auth/callback` for dev) |
+| Vercel env vars for live login | NEEDS-OWNER-ACTION | Owner: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `DATABASE_URL` (pooler), `ADMIN_EMAILS`, `TOTP_ENCRYPTION_KEY` (reuse old `AUTH_SECRET` value to preserve admin TOTP setups) |
+| App name, logo, privacy + terms URLs set in the provider consent screen | NEEDS-OWNER-ACTION | Owner: in the provider consent screen, set app name "PDF Tools Hub", logo, and links to `https://pdf-tools-hub-nine-lac.vercel.app/privacy` and `/terms` |
+| HONEST LOGIN CAVEAT | DONE (documented) | Live Google login is NOT proven until the two owner steps above are done — never claim it works before then. Full production verification requires a verified domain the owner controls — a vercel.app subdomain CANNOT be verified. See README "Owner manual steps" §1–2 |
+| Auth-identity deletion limit (honest) | DONE (documented) | No service-role key is used (anon key only, deliberately). Account delete + under-13 gate delete the Prisma profile and sign the user out, but the Supabase Auth identity itself is removed ONLY via the Supabase dashboard (owner step on user request). Stated on the account page, in the delete-route response (`supabaseIdentityRetained: true`), in `app/onboarding/actions.ts`, and here. No `SUPABASE_SERVICE_ROLE_KEY` is introduced anywhere. |
 
 ## AdSense program policies
 
@@ -59,7 +62,7 @@ given. Nothing below is claimed as done unless it was actually verified.
 
 | Threshold | Rule | Basis |
 |---|---|---|
-| Under 13 | Blocked entirely, account deleted, NO data kept | COPPA + GDPR-K lower bound |
+| Under 13 | Blocked entirely, site account deleted, NO site data kept (Supabase Auth identity itself removed only via dashboard — see the Auth-identity limit row above) | COPPA + GDPR-K lower bound |
 | 13–15 | Account cannot be activated (blocked message, SUSPENDED) | Below the digital-consent age |
 | 16–17 | Free account only, paid checkout blocked | GDPR default digital-consent age is 16; Nepal's Privacy Act 2018 sets no fixed digital-consent age, so 16 is the conservative alignment |
 | 18+ | Paid plans allowed | Contractual capacity |
@@ -79,6 +82,7 @@ Implemented in `lib/age.ts` (unit-tested), `app/onboarding/actions.ts`,
 | Rule | Status | Evidence / path |
 |---|---|---|
 | `prisma/schema.prisma` follows the coordinator's spec verbatim (models, enums, fields) | DONE | `prisma/schema.prisma` |
-| File identical in the sister site | NEEDS-OWNER-ACTION (coordination) | The sister-site builder owns its copy; both must be diffed before the shared DB goes live. This repo's copy is the spec text. |
-| AUTH_SECRET different per site; DATABASE_URL shared | DONE (documented + enforced by guidance) | README "Architecture", `.env.example` |
+| Supabase switch schema diff = ONLY additive `User.supabaseId String? @unique` (no renames, no other field changes) | DONE | `prisma/schema.prisma` (User model); legacy Auth.js `Account`/`Session`/`VerificationToken` tables retained untouched for compatibility, unused under Supabase |
+| File database-compatible in the sister site | NEEDS-OWNER-ACTION (coordination) | The sister-site builder owns its copy; both must be diffed before the shared DB goes live, and the schema is pushed ONCE from either repo. |
+| TOTP_ENCRYPTION_KEY set per site (replaces AUTH_SECRET for TOTP/IP purposes); DATABASE_URL shared (Supabase pooler) | DONE (documented + enforced by guidance) | README "Architecture", `.env.example` |
 | True cross-domain SSO honestly NOT claimed (cookies cannot cross vercel.app domains) | DONE (documented) | README "Architecture" |

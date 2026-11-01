@@ -14,7 +14,7 @@ export function getPaddle(): Paddle | null {
   return new Paddle(key, { environment: env });
 }
 
-export async function createCheckoutUrl(opts: { email: string; userId: string }): Promise<string | null> {
+export async function createCheckoutUrl(opts: { email: string; userId: string; supabaseId?: string }): Promise<string | null> {
   const paddle = getPaddle();
   const priceId = process.env.PADDLE_PRICE_ID;
   if (!paddle || !priceId) return null;
@@ -32,7 +32,7 @@ export async function createCheckoutUrl(opts: { email: string; userId: string })
   const tx = await paddle.transactions.create({
     items: [{ priceId, quantity: 1 }],
     ...(customerId ? { customerId } : {}),
-    customData: { userId: opts.userId, site: "pdf-tools-hub" },
+    customData: { userId: opts.userId, supabaseId: opts.supabaseId ?? null, site: "pdf-tools-hub" },
   });
   return tx.checkout?.url ?? null;
 }

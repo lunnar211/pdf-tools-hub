@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { auth } from "@/auth";
+import { getCurrentUser } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
   title: "Admin | PDF Tools Hub",
@@ -20,14 +20,19 @@ const NAV = [
   { href: "/admin/logs", label: "Logs" },
 ];
 
+// Server-side gate: signed-in + ADMIN role required even to see the nav.
+// Individual pages additionally require a fresh TOTP verification
+// (getAdminSession + totpFresh); this layout intentionally does NOT grant
+// page access by itself.
 export default async function Layout({ children }: { children: React.ReactNode }) {
-  const session = await auth();
-  if (!session?.user) redirect("/signin");
-  const role = (session.user as unknown as Record<string, unknown>).adminRole as string | null;
+  const { supabaseUser, dbUser } = await getCurrentUser();
+  if (!supabaseUser) redirect("/signin");
+  if (!dbUser || dbUser.role !== "ADMIN" || !dbUser.adminRole) redirect("/");
+  const role = dbUser.adminRole;
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
       <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">
-        Admin panel — signed in as {String(session.user.email ?? "")} (role: {role ?? "none"})
+        Admin panel — signed in as {dbUser.email} (role: {role})
       </p>
       <nav aria-label="Admin navigation" className="mt-3 flex flex-wrap gap-2">
         {NAV.map((item) => (

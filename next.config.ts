@@ -1,12 +1,19 @@
 import type { NextConfig } from "next";
 
+// Supabase Auth needs browser calls to the project's auth endpoint
+// (sign-out + session refresh) and Google avatar images, so the public
+// project host and Google's avatar host are allowlisted explicitly. If the
+// Supabase project ever changes, this host must change with it. The host is
+// a public project URL, not a secret.
+const SUPABASE_HOST = "https://omnqidmauvloedscncir.supabase.co";
+
 const csp = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-inline' https://va.vercel-scripts.com",
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob:",
+  "img-src 'self' data: blob: https://lh3.googleusercontent.com",
   "font-src 'self'",
-  "connect-src 'self' https://va.vercel-scripts.com",
+  `connect-src 'self' https://va.vercel-scripts.com ${SUPABASE_HOST}`,
   "frame-ancestors 'none'",
   "object-src 'none'",
   "base-uri 'self'",

@@ -1,5 +1,5 @@
 "use client";
-import { signOut } from "next-auth/react";
+import { signOutBrowser } from "@/lib/supabase/client";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 
@@ -55,7 +55,8 @@ export function DeleteButton() {
               setMsg("Delete failed. Please try again or contact support.");
               return;
             }
-            await signOut({ callbackUrl: "/" });
+            await signOutBrowser();
+            window.location.href = "/";
           }}
         >
           Yes, delete everything
@@ -104,7 +105,13 @@ export function CheckoutButton({ alreadyPremium, canBuy }: { alreadyPremium: boo
 
 export function SignOutButton() {
   return (
-    <Button variant="outline" onClick={() => void signOut({ callbackUrl: "/" })}>
+    <Button
+      variant="outline"
+      onClick={async () => {
+        await signOutBrowser();
+        window.location.href = "/";
+      }}
+    >
       Sign out
     </Button>
   );

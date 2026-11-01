@@ -4,7 +4,7 @@
 // 3. Signed-in user (DB): suspended -> 403; daily Job count vs plan quota -> 429.
 // 4. Everyone else: the existing per-IP daily limit (unchanged behavior).
 // DB failures fall through to the IP limit so tools never break for guests.
-import { auth } from "@/auth";
+import { getCurrentUser } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { getClientIp, checkRateLimit, FREE_DAILY_LIMIT } from "@/lib/rate-limit";
 import { errorResponse } from "@/lib/files";
@@ -32,18 +32,14 @@ export async function toolGate(req: Request, tool: string): Promise<Response | n
   }
   let sessionUserId: string | null = null;
   let plan: "FREE" | "PREMIUM" = "FREE";
-  // Without AUTH_SECRET there can be no valid session; skip auth() entirely
-  // instead of logging a MissingSecret error on every guest conversion.
+  // Without Supabase env there can be no valid session; getCurrentUser()
+  // returns nulls in that case, so guests fall through to the IP limit.
   try {
-    const session = process.env.AUTH_SECRET ? await auth() : null;
-    const email = session?.user?.email;
-    if (email && prisma) {
-      const dbUser = await prisma.user.findUnique({ where: { email } });
-      if (dbUser) {
-        if (dbUser.status === "SUSPENDED") return errorResponse("This account is suspended.", 403);
-        sessionUserId = dbUser.id;
-        plan = dbUser.plan === "PREMIUM" ? "PREMIUM" : "FREE";
-      }
+    const { dbUser } = await getCurrentUser();
+    if (dbUser) {
+      if (dbUser.status === "SUSPENDED") return errorResponse("This account is suspended.", 403);
+      sessionUserId = dbUser.id;
+      plan = dbUser.plan === "PREMIUM" ? "PREMIUM" : "FREE";
     }
   } catch {
     // fall through to the IP limit

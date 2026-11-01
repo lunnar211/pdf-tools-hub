@@ -1,16 +1,16 @@
-import { auth } from "@/auth";
+import { getCurrentUser } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 // GDPR/CCPA-style export: the user's own rows only (IDOR-safe: the query is
-// always scoped to the session's user id, never to a client-supplied id).
+// always scoped to the session's Supabase user id, never to a
+// client-supplied id).
 export async function GET() {
-  const session = await auth();
-  if (!session?.user?.email) return Response.json({ error: "Not signed in." }, { status: 401 });
+  const { supabaseUser, dbUser: user } = await getCurrentUser();
+  if (!supabaseUser) return Response.json({ error: "Not signed in." }, { status: 401 });
   if (!prisma) return Response.json({ error: "Database not configured." }, { status: 503 });
-  const user = await prisma.user.findUnique({ where: { email: session.user.email } });
   if (!user) return Response.json({ error: "Account not found." }, { status: 404 });
   const [jobs, subscriptions, payments, notes] = await Promise.all([
     prisma.job.findMany({ where: { userId: user.id }, orderBy: { createdAt: "desc" } }),

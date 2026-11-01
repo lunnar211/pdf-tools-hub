@@ -7,9 +7,13 @@ This version (16.4.3) has breaking changes — APIs, conventions, and file struc
 ## Next.js 16 rules applied in this repo
 
 - **Middleware is now proxy:** auth gating lives in `proxy.ts` (exported function
-  `proxy`, Node.js runtime), NOT `middleware.ts`. The proxy is JWT-only and must
-  NEVER import Prisma or any DB code — role/adminRole/totpVerifiedAt come from
-  the Auth.js JWT, decoded with `@auth/core/jwt`.
+  `proxy`, Node.js runtime), NOT `middleware.ts`. Auth is Supabase Auth
+  (`@supabase/ssr`): the proxy checks the Supabase session from cookies plus
+  the signed `pth-totp` cookie, and must NEVER import Prisma or any DB code
+  — role/adminRole/age/suspension are re-checked server-side in layouts,
+  pages, and API routes (`lib/supabase/server.ts`, `lib/admin.ts`). Auth.js
+  is REMOVED from this repo: no `auth.ts`, no `next-auth`, no
+  `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` env vars.
 - **Request APIs are async only** (`cookies()`, `headers()`, `params`,
   `searchParams`); never use sync access.
 - **`next lint` is removed** — the `lint` script calls the ESLint CLI directly.

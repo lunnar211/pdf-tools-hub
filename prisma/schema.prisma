@@ -1,7 +1,13 @@
 // SHARED SCHEMA — PDF Tools Hub + AI Studio (sister site).
-// This file MUST stay identical in both sites. Do not improvise field names.
-// One Postgres database (Neon free tier recommended) is shared via the same
-// DATABASE_URL; AUTH_SECRET is DIFFERENT per site (never shared).
+// This file MUST stay database-compatible in both sites. Do not rename
+// models, tables, columns, or primary keys, and do not change other models'
+// fields — the schema is pushed ONCE from either repo.
+// One Postgres database (the owner's existing Supabase "LeadForge" project)
+// is shared via the same DATABASE_URL (Supabase pooler string, set by the
+// owner). Auth is Supabase Auth (Google provider configured in that
+// project); the Account/Session/VerificationToken tables below are legacy
+// Auth.js tables, retained untouched for shared-schema compatibility and
+// unused under Supabase Auth.
 // Build note: `prisma generate` runs at build (postinstall) with no DB
 // connection; all runtime DB access is guarded so the site works as a guest
 // tool when DATABASE_URL is unset.
@@ -43,6 +49,11 @@ enum JobStatus {
 
 model User {
   id                  String     @id @default(cuid())
+  // Supabase Auth user id (auth.users.id). The ONLY additive schema change
+  // of the Supabase switch: maps a Supabase Auth user to its Prisma row.
+  // Nullable + unique so pre-Supabase rows (email-only) keep working and
+  // are linked on first Supabase login (see lib/supabase/server.ts).
+  supabaseId          String?    @unique
   email               String     @unique
   name                String?
   image               String?

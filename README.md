@@ -2,7 +2,8 @@
 
 Free, everyday PDF tools built with Next.js 16.4.3 (App Router), TypeScript and Tailwind CSS:
 PDF to Word, Word to PDF, Image to PDF, Merge PDF, Split PDF and Compress PDF.
-Plus: Google sign-in (Auth.js v5, JWT sessions), an admin panel with TOTP 2FA,
+Plus: Google sign-in (Supabase Auth on the owner's existing "LeadForge"
+Supabase project, no separate OAuth client), an admin panel with TOTP 2FA,
 onboarding with age gates, and Paddle Billing for Premium.
 
 Live: https://pdf-tools-hub-nine-lac.vercel.app
@@ -55,30 +56,63 @@ Error responses are generic — no stack traces, secrets or internal paths.
 Security headers (CSP, HSTS, X-Frame-Options DENY, nosniff, strict Referrer-Policy)
 are set in `next.config.ts`. See `SECURITY_REPORT.md` for the audit.
 
-## Architecture: shared database, per-site sessions
+## Architecture: shared database, per-site sessions (Supabase Auth)
 
-- **One Postgres database shared by PDF Tools Hub + AI Studio** (Neon free tier
-  recommended). The same `DATABASE_URL` in both sites' Vercel projects is what
-  makes the user row shared. `prisma/schema.prisma` MUST stay identical in both
-  sites — do not improvise field names.
-- **AUTH_SECRET is DIFFERENT per site.** Sharing one would let one site forge
-  the other's tokens.
+- **Auth = Supabase Auth (Google provider) on the owner's EXISTING Supabase
+  project "LeadForge"** (`https://omnqidmauvloedscncir.supabase.co`). The
+  Google provider is already configured there — do NOT create a new Google
+  Cloud OAuth client, and do NOT add `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`
+  env vars. Sign-in is `supabase.auth.signInWithOAuth({ provider: "google" })`
+  redirecting to this site's own `/auth/callback`, which exchanges the code
+  for a session and validates the `next` redirect (relative paths only —
+  see `lib/redirect.ts`; absolute/external `next` values are rejected).
+- **One Postgres database shared by PDF Tools Hub + AI Studio** (the same
+  Supabase project, via its pooler `DATABASE_URL`). The same `DATABASE_URL`
+  in both sites' Vercel projects is what makes the user row shared.
+  `prisma/schema.prisma` MUST stay database-compatible in both sites — do not
+  rename models, tables, columns, or primary keys, and do not change other
+  models' fields. The ONLY schema change of the Supabase switch is the
+  additive `User.supabaseId String? @unique`, which maps a Supabase Auth user
+  to its Prisma row (first-login upsert in `/auth/callback`, by supabaseId
+  then email; lazy upsert in `lib/supabase/server.ts` if the callback ran
+  while the DB was down). The schema is pushed ONCE from either repo.
+  The old `Account`/`Session`/`VerificationToken` tables are legacy Auth.js
+  tables, retained untouched for compatibility and unused under Supabase.
+- **No service-role key.** Only the public anon key is used (`NEXT_PUBLIC_`
+  vars), from browser and server alike. Consequence, stated honestly: fully
+  deleting a Supabase Auth identity needs the service-role key or a dashboard
+  deletion — the site deletes the Prisma profile (account delete, under-13
+  age gate) and signs the user out, but the Auth identity itself is removed
+  only via the Supabase dashboard. See `COMPLIANCE_CHECKLIST.md`.
 - **Honest SSO limit:** true one-login SSO across two different vercel.app
   domains is NOT possible (cookies cannot cross domains). This build gives a
   shared DB + per-site sessions. SSO on a shared domain is a later step once
   custom domains exist.
-- **Sessions are JWT, not database sessions**, so the proxy (`proxy.ts` — the
-  Next.js 16 renamed middleware convention) can read role/adminRole/
-  totpVerifiedAt from the token with no DB round-trip. The proxy NEVER imports
-  Prisma. Build succeeds with `DATABASE_URL` unset (`prisma generate` runs at
-  build via postinstall; no build-time DB queries; DB pages are force-dynamic).
-  Without a DB, tools work as guest tools and auth/account/admin show an honest
-  "not configured" state.
+- **Sessions are Supabase cookies** (managed by `@supabase/ssr`), refreshed by
+  the proxy (`proxy.ts` — the Next.js 16 renamed middleware convention).
+  The proxy NEVER imports Prisma: it checks the Supabase session + the signed
+  TOTP cookie only, and every page/API route re-checks role, TOTP, age, and
+  suspension server-side. Build succeeds with `DATABASE_URL` unset (`prisma
+  generate` runs at build via postinstall; no build-time DB queries; DB pages
+  are force-dynamic). Without a DB, tools work as guest tools and
+  auth/account/admin show an honest "not configured" state.
 - **Admin:** Google-only sign-in restricted to the `ADMIN_EMAILS` allowlist
-  (first allowlisted login becomes SUPER) + mandatory TOTP 2FA (`/admin/setup-2fa`,
-  `/admin/verify-2fa`, 12-hour verification window). No passwords, no fallback
-  credential login — deliberately. Roles: SUPER / SUPPORT / FINANCE, enforced in
-  the proxy AND in every API route. Every admin action writes an AuditLog row.
+  (first allowlisted login becomes SUPER) + mandatory custom TOTP 2FA
+  (`/admin/setup-2fa`, `/admin/verify-2fa`, 12-hour verification window,
+  server-checked on every `/admin` page and API route via a signed httpOnly
+  cookie — see `lib/totp-session.ts`). Supabase's built-in MFA was NOT used:
+  it would add a second authenticator enrolment on the Auth user for a step
+  only admins take, while the custom TOTP was already built and tested.
+  No passwords, no fallback credential login — deliberately. Roles: SUPER /
+  SUPPORT / FINANCE, enforced in the proxy AND in every API route. Every admin
+  action writes an AuditLog row.
+- **Admin TOTP secret key:** `TOTP_ENCRYPTION_KEY` (server-only, never
+  `NEXT_PUBLIC_`). It replaces the old Auth.js `AUTH_SECRET` for TOTP-secret
+  encryption and IP-hash salt. If the owner reuses the old `AUTH_SECRET`
+  value as `TOTP_ENCRYPTION_KEY`, existing admin TOTP setups keep working;
+  otherwise admins re-run `/admin/setup-2fa`. The code still accepts a legacy
+  `AUTH_SECRET` as a fallback for that migration, but new deployments set
+  only `TOTP_ENCRYPTION_KEY`.
 - **Payments:** Paddle Billing (merchant of record), sandbox first. Checkout is
   a server-created hosted transaction (`POST /api/checkout`, auth + age 18+
   required); the webhook (`POST /api/webhooks/paddle`) verifies the signature
@@ -97,22 +131,33 @@ are hardcoded; all configuration comes from `process.env`.
 - `NEXT_PUBLIC_CONTACT_EMAIL` — contact form mailto fallback
 - `NEXT_PUBLIC_ADSENSE_PUBLISHER_ID` — ad slot renders nothing until set; never enable ads before approval
 - `NEXT_PUBLIC_PREMIUM_CHECKOUT_URL` — legacy optional checkout link; the real flow is Paddle via `/account`
-- `DATABASE_URL` — shared Neon Postgres connection string (both sites, same project)
-- `AUTH_SECRET` — per-site secret (different from the sister site)
-- `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` — Google OAuth (one Cloud project can serve both sites; add both redirect URIs)
+- `NEXT_PUBLIC_SUPABASE_URL` — Supabase project URL (LeadForge project; public, not a secret)
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` — Supabase public anon key (public by design; never commit a real value — placeholders only in docs)
+- `DATABASE_URL` — shared Supabase Postgres pooler connection string (both sites, same project)
+- `TOTP_ENCRYPTION_KEY` — server-only key for admin TOTP-secret encryption + IP-hash salt (generate with `openssl rand -base64 32`; reuse the old `AUTH_SECRET` value here to preserve existing admin TOTP setups)
 - `ADMIN_EMAILS` — comma-separated admin allowlist
 - `PADDLE_API_KEY`, `PADDLE_WEBHOOK_SECRET`, `PADDLE_PRICE_ID`, `PADDLE_ENV` (sandbox|production)
 
 ## Owner manual steps (nothing here can be done by an agent)
 
-1. **Neon:** create a free Neon project, run `prisma db push` (or migrate) against
-   it once, paste the pooled `DATABASE_URL` into BOTH sites' Vercel projects, redeploy.
-2. **Google OAuth:** create a Google Cloud OAuth client (web), add redirect URI
-   `https://pdf-tools-hub-nine-lac.vercel.app/api/auth/callback/google` (plus the
-   sister site's URI in the same project if sharing), paste client id/secret into
-   Vercel, redeploy. OAuth works in Testing mode immediately (test users only);
-   full production verification needs a custom domain you control — a vercel.app
-   subdomain cannot be verified. Never claim verification is done.
+1. **Supabase (existing "LeadForge" project — no new project, no new OAuth
+   client):** in Supabase Dashboard → Authentication → URL Configuration, add
+   Site URL `https://pdf-tools-hub-nine-lac.vercel.app` and Redirect URL
+   `https://pdf-tools-hub-nine-lac.vercel.app/auth/callback` (plus
+   `http://localhost:3000/auth/callback` for local dev, and the sister site's
+   callback if sharing the project). Run `prisma db push` (or migrate) against
+   the project's pooler database ONCE from either repo, paste the pooler
+   `DATABASE_URL` into BOTH sites' Vercel projects, redeploy. Live Google
+   login is NOT proven until these taps + the Vercel env vars below are done
+   — do not claim it works before then.
+2. **Vercel env vars (this site):** `NEXT_PUBLIC_SUPABASE_URL`,
+   `NEXT_PUBLIC_SUPABASE_ANON_KEY` (from Supabase Dashboard → Settings → API),
+   `DATABASE_URL` (pooler string), `ADMIN_EMAILS`,
+   `TOTP_ENCRYPTION_KEY` (new; reuse the old `AUTH_SECRET` value to preserve
+   existing admin TOTP setups), plus unchanged `PADDLE_*`. Do NOT set
+   `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` / `AUTH_SECRET` for this site
+   any more (Auth.js is removed; `AUTH_SECRET` is only a legacy fallback read
+   by the code during migration).
 3. **Admin:** set `ADMIN_EMAILS` to your Google email, sign in once (you become
    SUPER), then complete TOTP at `/admin/setup-2fa`.
 4. **Paddle:** create a Paddle account, complete verification (passport as an
@@ -129,8 +174,8 @@ are hardcoded; all configuration comes from `process.env`.
 ## Tests
 
 ```bash
-npm test        # vitest: age gates, TOTP/security, file validation, Paddle signatures, settings defaults
-npx playwright test  # chromium: public pages, tool pages, logged-out admin/account redirects, cookie banner, sitemap
+npm test        # vitest: age gates, TOTP/security, file validation, Paddle signatures, settings defaults, redirect validation, TOTP-cookie signing
+npx playwright test  # chromium: public pages, tool pages, logged-out admin/account redirects, cookie banner, sitemap, unauthenticated auth-surface + callback open-redirect rejection
 ```
 
 ## Deploy

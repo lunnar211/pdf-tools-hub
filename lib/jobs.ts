@@ -38,19 +38,17 @@ export async function countJobsToday(userId: string): Promise<number> {
   }
 }
 
-// Record a job for the currently signed-in user (resolved by session email).
+// Record a job for the currently signed-in user (resolved by Supabase
+// session -> Prisma row via supabaseId/email).
 // Guests produce no row (userId stays null via recordJob callers); this helper
 // simply no-ops for guests or when the DB is unset.
 export async function recordCurrentUserJob(tool: string, status: "SUCCESS" | "FAILED", inputSummary?: string): Promise<void> {
-  if (!prisma || !process.env.AUTH_SECRET) return;
+  if (!prisma) return;
   try {
-    const { auth } = await import("@/auth");
-    const session = await auth();
-    const email = session?.user?.email;
-    if (!email) return;
-    const user = await prisma.user.findUnique({ where: { email } });
-    if (!user) return;
-    await recordJob({ userId: user.id, tool, status, inputSummary });
+    const { getCurrentUser } = await import("./supabase/server");
+    const { dbUser } = await getCurrentUser();
+    if (!dbUser) return;
+    await recordJob({ userId: dbUser.id, tool, status, inputSummary });
   } catch {
     // never break the tool
   }

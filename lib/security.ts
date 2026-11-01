@@ -1,15 +1,24 @@
 // Security primitives (pure, unit-tested). Never store raw IPs or raw TOTP
-// secrets: IPs are SHA-256 hashed with a salt from AUTH_SECRET, TOTP secrets
-// are AES-256-GCM encrypted with a key derived from AUTH_SECRET.
+// secrets: IPs are SHA-256 hashed with a salt from TOTP_ENCRYPTION_KEY,
+// TOTP secrets are AES-256-GCM encrypted with a key derived from it.
+// TOTP_ENCRYPTION_KEY replaces the old Auth.js AUTH_SECRET for this purpose.
+// Legacy AUTH_SECRET is still accepted as a fallback so TOTP secrets
+// encrypted before the Supabase switch keep decrypting if the owner reuses
+// the old value under the new name; new deployments set only
+// TOTP_ENCRYPTION_KEY (server-only, never NEXT_PUBLIC_, never committed).
 import crypto from "node:crypto";
 
+function keySecret(): string {
+  return process.env.TOTP_ENCRYPTION_KEY ?? process.env.AUTH_SECRET ?? "";
+}
+
 export function hashIp(ip: string, salt?: string): string {
-  const s = salt ?? process.env.AUTH_SECRET ?? "unconfigured";
+  const s = salt ?? (keySecret() || "unconfigured");
   return crypto.createHash("sha256").update(`${s}:${ip}`).digest("hex");
 }
 
 function totpKey(): Buffer {
-  const secret = process.env.AUTH_SECRET ?? "";
+  const secret = keySecret();
   return crypto.createHash("sha256").update(`pth-totp:${secret}`).digest();
 }
 

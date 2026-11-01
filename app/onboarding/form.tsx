@@ -1,5 +1,5 @@
 "use client";
-import { signOut } from "next-auth/react";
+import { signOutBrowser } from "@/lib/supabase/client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -35,7 +35,11 @@ export function OnboardingForm() {
           return;
         }
         if (res.gate === "deleted-under13") {
-          await signOut({ callbackUrl: "/" });
+          await signOutBrowser();
+          // Full reload is deliberate: the account row is gone, so no
+          // cached server-component state for it may render again.
+          // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+          window.location.href = "/";
           return;
         }
         if (res.gate === "blocked-13-15") {
@@ -65,7 +69,9 @@ export function OnboardingForm() {
       <Button type="submit" disabled={busy}>{busy ? "Saving…" : "Continue"}</Button>
       <p className="text-sm text-slate-500 dark:text-slate-400">
         No ID document is needed — this is self-declaration only, and we store only your date of birth. Under-13
-        accounts are deleted, not kept. Ages 16–17 get a free account only; paid plans need age 18 or over.
+        site accounts are deleted, not kept (your Google sign-in identity is held by Supabase Auth, not this site,
+        and is removed only via the Supabase dashboard — see the account page note). Ages 16–17 get a free account
+        only; paid plans need age 18 or over.
       </p>
     </form>
   );

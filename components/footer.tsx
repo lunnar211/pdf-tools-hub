@@ -1,6 +1,28 @@
+"use client";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { SISTER_SITE_URL, LEADSFORCEGEN_URL, TOOLS } from "@/lib/site";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 export function Footer() {
+  // The Admin link is hidden from visitors with no signed-in session
+  // (same pattern as the navbar, which additionally requires the admin
+  // flag). It starts hidden and only appears after the browser session
+  // check confirms a session — so a logged-out visitor never sees it.
+  // Clicking it still proves nothing: every admin page and API route
+  // re-checks role + TOTP server-side, and signed-in non-admins are
+  // redirected to / by the admin layout, never shown the console.
+  const [signedIn, setSignedIn] = useState(false);
+  useEffect(() => {
+    const supabase = createSupabaseBrowserClient();
+    if (!supabase) return;
+    const refresh = async () => {
+      const { data } = await supabase.auth.getSession();
+      setSignedIn(Boolean(data.session));
+    };
+    void refresh();
+    const { data: listener } = supabase.auth.onAuthStateChange(() => void refresh());
+    return () => listener.subscription.unsubscribe();
+  }, []);
   return (
     <footer className="border-t-2 border-[#99f6e4] bg-[#f0fdfa] dark:border-teal-900 dark:bg-slate-950">
       <div className="mx-auto grid max-w-6xl gap-8 px-4 py-10 sm:grid-cols-3">
@@ -28,7 +50,9 @@ export function Footer() {
             <li><Link href="/acceptable-use" className="inline-flex min-h-[44px] items-center text-[#0f766e] hover:underline dark:text-[#5eead4]">Acceptable Use</Link></li>
             <li><Link href="/dmca" className="inline-flex min-h-[44px] items-center text-[#0f766e] hover:underline dark:text-[#5eead4]">DMCA</Link></li>
             <li><Link href="/disclaimer" className="inline-flex min-h-[44px] items-center text-[#0f766e] hover:underline dark:text-[#5eead4]">Disclaimer</Link></li>
-            <li><Link href="/admin" className="inline-flex min-h-[44px] items-center text-[#0f766e] hover:underline dark:text-[#5eead4]">Admin</Link></li>
+            {signedIn && (
+              <li><Link href="/admin" className="inline-flex min-h-[44px] items-center text-[#0f766e] hover:underline dark:text-[#5eead4]">Admin</Link></li>
+            )}
             <li><a href={SISTER_SITE_URL} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[44px] items-center text-[#0f766e] hover:underline dark:text-[#5eead4]">AI Studio (our other project)</a></li>
             <li><a href={LEADSFORCEGEN_URL} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[44px] items-center text-[#0f766e] hover:underline dark:text-[#5eead4]">LeadsForceGen (our other project)</a></li>
           </ul>

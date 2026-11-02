@@ -3,6 +3,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { signInWithEmail } from "@/lib/supabase/email-signin";
+import { buildAuthCallbackUrl } from "@/lib/supabase/callback-url";
 
 export function SigninForm({ configured, next }: { configured: boolean; next: string }) {
   const [busy, setBusy] = useState(false);
@@ -33,10 +35,13 @@ export function SigninForm({ configured, next }: { configured: boolean; next: st
             return;
           }
           // Supabase Auth Google OAuth. redirectTo is this site's own
-          // /auth/callback, which validates `next` again before redirecting.
+          // /auth/callback, built from window.location.origin (never from
+          // user input or Supabase's Site URL setting); `next` inside it
+          // is re-validated by buildAuthCallbackUrl, and /auth/callback
+          // validates it a third time before redirecting.
           const { error } = await supabase.auth.signInWithOAuth({
             provider: "google",
-            options: { redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}` },
+            options: { redirectTo: buildAuthCallbackUrl(window.location.origin, next) },
           });
           if (error) {
             setError("Could not start Google sign-in. Please try again.");
@@ -66,15 +71,15 @@ export function SigninForm({ configured, next }: { configured: boolean; next: st
             setBusy(false);
             return;
           }
-          // Email + password via Supabase Auth. The account itself is
-          // created by the site owner in the Supabase dashboard (never in
-          // chat, never in code); the Email provider must be enabled there.
-          // The error is deliberately generic: it covers a wrong password,
-          // an unknown email, and a disabled Email provider without telling
-          // an attacker which one it was.
-          const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
-          if (error) {
-            setError("Email or password is incorrect, or email sign-in is not enabled yet.");
+          // Email + password via Supabase Auth (see
+          // lib/supabase/email-signin.ts for the tested behavior: trimmed
+          // email, blank inputs refused locally, every failure mapped to
+          // one generic message). The account itself is created by the
+          // site owner in the Supabase dashboard (never in chat, never in
+          // code); the Email provider must be enabled there.
+          const result = await signInWithEmail(supabase, email, password);
+          if (!result.ok) {
+            setError(result.message);
             setBusy(false);
             return;
           }

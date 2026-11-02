@@ -112,8 +112,8 @@ export default async function Page() {
         <h2 className="text-xl font-bold">Your data</h2>
         <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
           Export downloads your profile, jobs, subscriptions, and payments as JSON. Delete removes them permanently
-          from this site&apos;s database. Note: delete removes your site profile, but your Google sign-in identity
-          itself lives in Supabase Auth and can only be removed by the site owner from the Supabase dashboard (the
+          from this site&apos;s database. Note: delete removes your site profile, but your Supabase sign-in identity
+          (Google or email) itself lives in Supabase Auth and can only be removed by the site owner from the Supabase dashboard (the
           browser key cannot delete Auth users) — after deleting here, sign out and contact support if you also want
           the sign-in identity removed.
         </p>

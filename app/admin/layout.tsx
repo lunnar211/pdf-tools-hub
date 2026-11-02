@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/supabase/server";
+import { resolveAdminGate } from "@/lib/admin-gate";
 
 export const metadata: Metadata = {
   title: "Admin | PDF Tools Hub",
@@ -25,11 +26,16 @@ const NAV = [
 // Server-side gate: signed-in + ADMIN role required even to see the nav.
 // Individual pages additionally require a fresh TOTP verification
 // (getAdminSession + totpFresh); this layout intentionally does NOT grant
-// page access by itself.
+// page access by itself. The decision lives in lib/admin-gate.ts (pure,
+// unit-tested); the proxy enforces the session requirement even earlier.
 export default async function Layout({ children }: { children: React.ReactNode }) {
   const { supabaseUser, dbUser } = await getCurrentUser();
-  if (!supabaseUser) redirect("/signin");
-  if (!dbUser || dbUser.role !== "ADMIN" || !dbUser.adminRole) redirect("/");
+  const gate = resolveAdminGate(supabaseUser, dbUser);
+  if (gate === "signin") redirect("/signin");
+  if (gate === "home") redirect("/");
+  // Unreachable at runtime (a null dbUser yields gate "home" above), but
+  // required so TypeScript narrows dbUser for the lines below.
+  if (!dbUser) redirect("/");
   const role = dbUser.adminRole;
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">

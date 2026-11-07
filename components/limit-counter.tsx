@@ -35,10 +35,21 @@ export function LimitCounter({ refreshKey = 0 }: { refreshKey?: number }) {
       </p>
     );
   }
+  // Guests: the per-visitor count is only tracked in memory on each
+  // serverless instance (no shared store until Upstash is configured), so
+  // the live number is unreliable — advertise the fair-use guideline
+  // instead of a count that flips between instances. Signed-in limits
+  // are tracked per account, so those users still see a real number.
+  if (info.plan === "guest") {
+    return (
+      <p className="text-sm font-semibold text-[#0f766e] dark:text-[#5eead4]">
+        Guest fair-use guideline: around {info.quota} conversions a day (sign in for a tracked limit)
+      </p>
+    );
+  }
   return (
     <p className="text-sm font-semibold text-[#0f766e] dark:text-[#5eead4]">
       {info.remaining} of {info.quota} free conversions left today
-      {info.plan === "guest" ? " (sign in for more)" : ""}
     </p>
   );
 }

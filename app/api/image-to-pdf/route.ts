@@ -15,7 +15,14 @@ export async function POST(req: Request) {
     if (blocked) return blocked;
     const { files, error } = await getFiles(req, "files");
     if (error) return error;
-    schema.parse({ files });
+    const parsed = schema.safeParse({ files });
+    if (!parsed.success)
+      return errorResponse(
+        files.length > MAX_IMAGES
+          ? `Add up to ${MAX_IMAGES} images per conversion.`
+          : "Add at least 1 image to convert.",
+        400
+      );
     const doc = await PDFDocument.create();
     const A4W = 595.28, A4H = 841.89;
     for (const file of files) {

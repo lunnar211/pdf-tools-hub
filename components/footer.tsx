@@ -28,7 +28,7 @@ export function Footer() {
       <div className="mx-auto grid max-w-6xl gap-8 px-4 py-10 sm:grid-cols-3">
         <div>
           <p className="text-lg font-extrabold text-[#0f766e] dark:text-[#5eead4]">PDF Tools Hub</p>
-          <p className="mt-2 text-slate-600 dark:text-slate-300">Free, everyday PDF tools. No account needed for the free tier. Files are processed on our server and deleted immediately after processing (max 60 minutes in any case); we never list or share them.</p>
+          <p className="mt-2 text-slate-600 dark:text-slate-300">Free, everyday PDF tools. No account needed for the free tier. Files are processed in your browser or in memory on our server — never stored, never listed or shared.</p>
         </div>
         <nav aria-label="PDF tools">
           <p className="font-bold text-slate-800 dark:text-slate-100">Tools</p>
@@ -58,7 +58,7 @@ export function Footer() {
           </ul>
         </nav>
       </div>
-      <p className="border-t border-[#99f6e4] py-4 text-center text-sm text-slate-600 dark:border-teal-900 dark:text-slate-400">PDF Tools Hub. Free tier: 20 conversions per day per visitor.</p>
+      <p className="border-t border-[#99f6e4] py-4 text-center text-sm text-slate-600 dark:border-teal-900 dark:text-slate-400">PDF Tools Hub. Free for guests: around 20 conversions a day as a fair-use guideline — sign in (free) for a tracked 100 a day.</p>
     </footer>
   );
 }

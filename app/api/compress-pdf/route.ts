@@ -16,7 +16,8 @@ export async function POST(req: Request) {
     const { files, error } = await getFiles(req, "file");
     if (error) return error;
     const file = files[0];
-    schema.parse({ file });
+    const parsed = schema.safeParse({ file });
+    if (!parsed.success) return errorResponse("No file was uploaded.", 400);
     const buf = Buffer.from(await file.arrayBuffer());
     const bad = validateUpload(buf, file.type, ["pdf"], MAX_PDF_BYTES);
     if (bad) return errorResponse(bad, 400);

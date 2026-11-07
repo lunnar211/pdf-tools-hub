@@ -15,7 +15,8 @@ export async function POST(req: Request) {
     if (blocked) return blocked;
     const { files, error } = await getFiles(req, "files");
     if (error) return error;
-    schema.parse({ files });
+    const parsed = schema.safeParse({ files });
+    if (!parsed.success) return errorResponse("Add at least 2 PDFs to merge.", 400);
     const out = await PDFDocument.create();
     for (const file of files) {
       const buf = Buffer.from(await file.arrayBuffer());

@@ -27,7 +27,7 @@ export const LANDINGS: Landing[] = [
       "Estimated size before you download",
     ],
     faqs: [
-      { q: "Is JPG to PDF really free?", a: "Yes. Guests get 20 conversions a day; signing in (free) raises that to 100 a day. No watermark is added to your PDF." },
+      { q: "Is JPG to PDF really free?", a: "Yes. Guests get around 20 conversions a day as a fair-use guideline; signing in (free) raises that to 100 a day. No watermark is added to your PDF." },
       { q: "Do my JPGs get uploaded?", a: "No. Conversion runs in your browser with pdf-lib. Only if your browser cannot decode a JPG does the page offer a server fallback, which processes the file in memory and never stores it." },
       { q: "Can I combine JPGs with PNGs?", a: "Yes — mix JPG, PNG, WebP, BMP, and HEIC in one conversion, in any order." },
     ],
@@ -49,7 +49,7 @@ export const LANDINGS: Landing[] = [
     ],
     faqs: [
       { q: "Does it work on iPhone?", a: "Yes. iPhone photos (including HEIC) are decoded in the browser — Safari decodes HEIC natively, other browsers use a built-in decoder. If a photo cannot be decoded, it fails on its own instead of breaking the whole batch." },
-      { q: "Do I need an account?", a: "No. Guests get 20 conversions a day. Signing in is free and raises the limit to 100 a day." },
+      { q: "Do I need an account?", a: "No. Guests get around 20 conversions a day as a fair-use guideline. Signing in is free and raises the limit to 100 a day." },
       { q: "Will the PDF be too big to email?", a: "Choose “Small file” quality when converting, or run the finished PDF through Compress PDF. The estimated size is shown before you download." },
     ],
     toolSlug: "image-to-pdf",

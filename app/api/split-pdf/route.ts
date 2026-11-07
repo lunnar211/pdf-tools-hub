@@ -13,7 +13,12 @@ export async function POST(req: Request) {
   try {
     const blocked = await toolGate(req, "split-pdf");
     if (blocked) return blocked;
-    const form = await req.formData();
+    let form: FormData;
+    try {
+      form = await req.formData();
+    } catch {
+      return errorResponse("Could not read the uploaded form.", 400);
+    }
     const file = form.get("file");
     if (!(file instanceof File) || file.size === 0) return errorResponse("No file was uploaded.", 400);
     const parsed = z.object({ ranges: rangeSchema }).safeParse({ ranges: form.get("ranges") });

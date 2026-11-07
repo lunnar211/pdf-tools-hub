@@ -40,7 +40,7 @@ export function ToolGrid() {
         type="search"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        placeholder="Search tools — try “jpg”, “rotate”, or “watermark”…"
+        placeholder="Search tools — try “jpg” or “rotate”…"
         className="mt-2 min-h-[44px] w-full max-w-xl rounded-lg border-2 border-[#99f6e4] bg-white px-4 py-2 text-slate-900 dark:border-teal-800 dark:bg-slate-800 dark:text-white"
       />
       {visible.length === 0 ? (

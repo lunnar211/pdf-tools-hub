@@ -31,8 +31,8 @@ export default async function Page() {
   const canBuy = dbUser ? canBuyPaid(dbUser.dateOfBirth) : false;
 
   const freeFeatures = [
-    `${guestQuota} conversions per day without signing in`,
-    `${freeQuota} conversions per day when signed in`,
+    `${guestQuota} conversions a day without signing in (fair-use guideline)`,
+    `${freeQuota} conversions per day when signed in (tracked)`,
     "All 12 tools, including browser conversion",
     "No watermark on your files",
     "Files processed in memory or in your browser — never stored",
@@ -126,8 +126,8 @@ export default async function Page() {
           <div className="rounded-xl border border-[#99f6e4] bg-white p-4 dark:border-teal-900 dark:bg-slate-900">
             <h3 className="font-bold text-slate-900 dark:text-white">Do I need an account?</h3>
             <p className="mt-1 text-slate-600 dark:text-slate-300">
-              No. Guests get {guestQuota} conversions a day. Signing in (free) raises that to{" "}
-              {freeQuota} a day and unlocks Premium.
+              No. Guests get around {guestQuota} conversions a day as a fair-use guideline. Signing in (free)
+              raises that to a tracked {freeQuota} a day and unlocks Premium.
             </p>
           </div>
         </div>

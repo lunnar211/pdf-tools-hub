@@ -26,8 +26,8 @@ export default async function Page({
       <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white">Sign in</h1>
       <p className="mt-3 text-slate-600 dark:text-slate-300">
         Sign in with Google, or with an email account created by the site owner, for higher daily limits, job
-        history, and an account page. Guests can still use every tool with the free daily limit — no account is
-        required.
+        history, and an account page. Guests can still use every tool within the free fair-use guideline
+        (around 20 conversions a day) — no account is required.
       </p>
       {params.error === "signin_failed" && (
         <div role="alert" className="mt-6 rounded-xl border-2 border-red-300 bg-red-50 p-4 dark:bg-red-950">

@@ -13,10 +13,10 @@ export const TOOL_CONTENT: Record<string, ToolContent> = {
     faqs: [
       { q: "Will the Word file look exactly like the PDF?", a: "No. Text is preserved, and larger text becomes headings, but page layout, images and tables are approximated. Treat the result as an editable draft, not a pixel-perfect copy." },
       { q: "What about scanned PDFs?", a: "Scanned pages are pictures of text, not real text, so this tool cannot extract them. It works on PDFs with a real text layer, which most exported PDFs have." },
-      { q: "Is there a page or size limit?", a: "Files up to 25 MB are accepted on the free tier, with 20 conversions per day per visitor." },
+      { q: "Is there a page or size limit?", a: "Files up to 25 MB are accepted on the free tier, with around 20 conversions a day per guest as a fair-use guideline." },
     ],
     note: "Fidelity limit: layout, images and tables are approximated; text is preserved.",
-    limits: "PDF up to 25 MB. Free tier: 20 conversions per day.",
+    limits: "PDF up to 25 MB. Free tier: around 20 conversions a day for guests (fair-use guideline).",
   },
   "word-to-pdf": {
     slug: "word-to-pdf", title: "Word to PDF", meta: "Convert a Word document to PDF free. Headings, bold and italic text are kept; complex layout is simplified.",
@@ -30,7 +30,7 @@ export const TOOL_CONTENT: Record<string, ToolContent> = {
       { q: "Why is my PDF text smaller than expected?", a: "Long lines are wrapped to fit an A4 page with comfortable margins, so very wide content reflows rather than being cut off." },
     ],
     note: "Fidelity limit: complex Word layout is simplified; headings, bold, italic and paragraphs are preserved.",
-    limits: "Word (.docx) up to 25 MB. Free tier: 20 conversions per day.",
+    limits: "Word (.docx) up to 25 MB. Free tier: around 20 conversions a day for guests (fair-use guideline).",
   },
   "image-to-pdf": {
     slug: "image-to-pdf", title: "Image to PDF", meta: "Combine JPG, PNG, WebP, BMP and HEIC photos into one PDF, free — converted in your browser, with reorder, rotate and page options.",
@@ -46,7 +46,7 @@ export const TOOL_CONTENT: Record<string, ToolContent> = {
       { q: "Can I password-protect the PDF?", a: "Not yet. pdf-lib cannot encrypt PDFs, so a password field would be fake security. Title metadata and page numbers are supported instead." },
     ],
     note: "Browser conversion: files never leave your device. Page numbers and PDF title metadata are optional.",
-    limits: "Images up to 10 MB each, max 20 per conversion. Free tier: 20 conversions per day.",
+    limits: "Images up to 10 MB each, max 20 per conversion. Free tier: around 20 conversions a day for guests (fair-use guideline).",
   },
   "merge-pdf": {
     slug: "merge-pdf", title: "Merge PDF", meta: "Merge several PDFs into one file free, in the order you choose. Each file up to 25 MB.",
@@ -60,7 +60,7 @@ export const TOOL_CONTENT: Record<string, ToolContent> = {
       { q: "Can I reorder pages after uploading?", a: "The merged order follows the order you select the files in. Re-select in the right order if you need a different sequence." },
     ],
     note: "Pages are copied unchanged and in order; bookmarks and interactive form fields are not preserved.",
-    limits: "2 to 20 PDFs per request, each up to 25 MB. Free tier: 20 conversions per day.",
+    limits: "2 to 20 PDFs per request, each up to 25 MB. Free tier: around 20 conversions a day for guests (fair-use guideline).",
   },
   "split-pdf": {
     slug: "split-pdf", title: "Split PDF", meta: "Split a PDF by page ranges free, for example 1-3,5. Get one PDF per range in a ZIP file.",
@@ -74,7 +74,7 @@ export const TOOL_CONTENT: Record<string, ToolContent> = {
       { q: "Can ranges overlap?", a: "Yes. A page can appear in more than one output file if you list it in more than one range." },
     ],
     note: "Output is a ZIP file with one PDF per page range you typed.",
-    limits: "PDF up to 25 MB. Free tier: 20 conversions per day.",
+    limits: "PDF up to 25 MB. Free tier: around 20 conversions a day for guests (fair-use guideline).",
   },
   "compress-pdf": {
     slug: "compress-pdf", title: "Compress PDF", meta: "Compress a PDF free to make it smaller for email and uploads. Best-effort compression; input and output sizes are shown.",
@@ -88,7 +88,7 @@ export const TOOL_CONTENT: Record<string, ToolContent> = {
       { q: "Does compression change how pages look?", a: "No. Pages, text and images are kept as they are; only the file's internal storage is tightened." },
     ],
     note: "Best-effort compression only (not Ghostscript-level). Images are not downsampled. Input vs output size is reported in the UI.",
-    limits: "PDF up to 25 MB. Free tier: 20 conversions per day.",
+    limits: "PDF up to 25 MB. Free tier: around 20 conversions a day for guests (fair-use guideline).",
   },
   "pdf-to-jpg": {
     slug: "pdf-to-jpg", title: "PDF to JPG", meta: "Convert PDF pages to JPG images free, in your browser. One page becomes one JPG; multi-page PDFs download as a ZIP.",
@@ -102,7 +102,7 @@ export const TOOL_CONTENT: Record<string, ToolContent> = {
       { q: "How big are the images?", a: "That depends on the detail setting. Standard is screen-sized; Higher suits printing; High produces large files." },
     ],
     note: "Browser conversion: files never leave your device.",
-    limits: "PDF up to 25 MB. Free tier: 20 conversions per day.",
+    limits: "PDF up to 25 MB. Free tier: around 20 conversions a day for guests (fair-use guideline).",
   },
   "rotate-pdf": {
     slug: "rotate-pdf", title: "Rotate PDF", meta: "Rotate PDF pages free, in your browser. Fix sideways or upside-down pages one by one.",
@@ -116,7 +116,7 @@ export const TOOL_CONTENT: Record<string, ToolContent> = {
       { q: "Can I rotate just one page?", a: "Yes. Each page has its own rotation setting, so the rest of the document is untouched." },
     ],
     note: "Browser conversion: files never leave your device.",
-    limits: "PDF up to 25 MB. Free tier: 20 conversions per day.",
+    limits: "PDF up to 25 MB. Free tier: around 20 conversions a day for guests (fair-use guideline).",
   },
   "organize-pages": {
     slug: "organize-pages", title: "Organize PDF pages", meta: "Delete and reorder PDF pages free, in your browser. Drag pages into the order you want.",
@@ -130,7 +130,7 @@ export const TOOL_CONTENT: Record<string, ToolContent> = {
       { q: "Is the page order I see the order I get?", a: "Yes. The thumbnails show the new order, and the saved PDF follows it exactly." },
     ],
     note: "Browser conversion: files never leave your device. At least one page must be kept.",
-    limits: "PDF up to 25 MB. Free tier: 20 conversions per day.",
+    limits: "PDF up to 25 MB. Free tier: around 20 conversions a day for guests (fair-use guideline).",
   },
   "watermark-pdf": {
     slug: "watermark-pdf", title: "Add watermark", meta: "Add a text watermark to a PDF free, in your browser. Diagonal, with adjustable strength, size and colour.",
@@ -144,7 +144,7 @@ export const TOOL_CONTENT: Record<string, ToolContent> = {
       { q: "Can I add an image watermark?", a: "Not yet — only text watermarks are supported today." },
     ],
     note: "Browser conversion: files never leave your device. Text watermarks only.",
-    limits: "PDF up to 25 MB. Free tier: 20 conversions per day.",
+    limits: "PDF up to 25 MB. Free tier: around 20 conversions a day for guests (fair-use guideline).",
   },
   "page-numbers": {
     slug: "page-numbers", title: "Add page numbers", meta: "Add page numbers to a PDF free, in your browser. Page X of Y at the foot of every page.",
@@ -158,7 +158,7 @@ export const TOOL_CONTENT: Record<string, ToolContent> = {
       { q: "Where do the numbers appear?", a: "At the foot of each page, centred or right-aligned, in grey text." },
     ],
     note: "Browser conversion: files never leave your device.",
-    limits: "PDF up to 25 MB. Free tier: 20 conversions per day.",
+    limits: "PDF up to 25 MB. Free tier: around 20 conversions a day for guests (fair-use guideline).",
   },
   "ocr-pdf": {
     slug: "ocr-pdf", title: "OCR: scanned PDF to searchable text", meta: "Make a scanned PDF searchable free, in your browser. English text recognition with a searchable PDF + extracted text.",
@@ -174,6 +174,6 @@ export const TOOL_CONTENT: Record<string, ToolContent> = {
       { q: "Can I password-protect or unlock a PDF here?", a: "No. Real PDF encryption is not supported by the libraries this site uses, so no fake lock is offered. See the FAQ on the homepage for the full explanation." },
     ],
     note: "Browser OCR: English only, first 10 pages, accuracy depends on scan quality. Protect/Unlock PDF is NOT offered — pdf-lib cannot do real PDF encryption, so no fake lock is shipped.",
-    limits: "PDF up to 25 MB, first 10 pages. Free tier: 20 conversions per day.",
+    limits: "PDF up to 25 MB, first 10 pages. Free tier: around 20 conversions a day for guests (fair-use guideline).",
   },
 };

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ShieldCheck, Zap, Trash2, Sparkles, Users } from "lucide-react";
+import { ShieldCheck, Zap, Trash2, Sparkles, Users, ArrowRight, FileText, Check } from "lucide-react";
 import { SISTER_SITE_URL, LEADSFORCEGEN_URL } from "@/lib/site";
 import { PremiumSection } from "@/components/premium-section";
 import { ToolGrid } from "@/components/tool-grid";
@@ -22,7 +22,7 @@ export default function Home() {
             <Link href="/pdf-to-word" className="inline-flex min-h-[44px] items-center rounded-lg bg-[#ea580c] px-5 py-2.5 font-semibold text-white hover:bg-[#c2410c]">Start converting</Link>
             <Link href="/merge-pdf" className="inline-flex min-h-[44px] items-center rounded-lg border-2 border-[#0d9488] px-5 py-2.5 font-semibold text-[#0f766e] hover:bg-white dark:text-[#5eead4]">Merge PDFs</Link>
           </div>
-          <p className="mt-4 text-sm text-slate-600 dark:text-slate-300">Free tier: 20 conversions per day per visitor. PDFs up to 25 MB.</p>
+          <p className="mt-4 text-sm text-slate-600 dark:text-slate-300">Free for guests: around 20 conversions a day (fair-use guideline). PDFs up to 25 MB. Sign in free for a tracked 100 a day.</p>
           <ul className="mt-4 flex flex-wrap gap-2 text-sm font-semibold" aria-label="Trust badges">
             <li className="rounded-full border border-[#99f6e4] px-3 py-1 text-[#0f766e] dark:border-teal-900 dark:text-[#5eead4]">✓ No watermark on your files</li>
             <li className="rounded-full border border-[#99f6e4] px-3 py-1 text-[#0f766e] dark:border-teal-900 dark:text-[#5eead4]">✓ Browser tools never upload your files</li>
@@ -30,13 +30,39 @@ export default function Home() {
           </ul>
         </Reveal>
         <div aria-hidden="true" className="relative mx-auto hidden w-full max-w-sm sm:block">
-          <div className="rotate-3 rounded-xl border-2 border-[#99f6e4] bg-white p-5 dark:border-teal-800 dark:bg-slate-900">
-            <div className="h-3 w-3/4 rounded bg-[#99f6e4]" /><div className="mt-3 h-3 w-full rounded bg-[#f0fdfa] dark:bg-slate-800" /><div className="mt-2 h-3 w-5/6 rounded bg-[#f0fdfa] dark:bg-slate-800" /><div className="mt-2 h-3 w-2/3 rounded bg-[#f0fdfa] dark:bg-slate-800" />
-            <p className="mt-4 inline-block rounded-md bg-[#0d9488] px-3 py-1 text-sm font-bold text-white">report.pdf</p>
+          {/* Source: the PDF you upload */}
+          <div className="rotate-2 rounded-xl border-2 border-[#99f6e4] bg-white p-5 dark:border-teal-800 dark:bg-slate-900">
+            <div className="flex items-center gap-2">
+              <span className="rounded-md bg-[#0f766e] px-2 py-1 text-xs font-bold text-white">PDF</span>
+              <span className="text-sm font-bold text-slate-900 dark:text-white">report.pdf · 3 pages</span>
+            </div>
+            <div className="mt-4 h-3 w-3/4 rounded bg-[#0d9488]" />
+            <div className="mt-3 h-3 w-full rounded bg-[#f0fdfa] dark:bg-slate-800" />
+            <div className="mt-2 h-3 w-5/6 rounded bg-[#f0fdfa] dark:bg-slate-800" />
+            <div className="mt-2 h-3 w-2/3 rounded bg-[#f0fdfa] dark:bg-slate-800" />
+            <div className="mt-4 flex gap-2">
+              <span className="h-9 flex-1 rounded-md bg-[#f0fdfa] dark:bg-slate-800" />
+              <span className="h-9 flex-1 rounded-md bg-[#f0fdfa] dark:bg-slate-800" />
+            </div>
           </div>
-          <div className="absolute -bottom-6 -left-6 -rotate-6 rounded-xl border-2 border-[#ea580c] bg-white px-4 py-3 shadow-none dark:bg-slate-900">
-            <p className="font-bold text-slate-900 dark:text-white">report.docx</p>
-            <p className="text-sm text-slate-600 dark:text-slate-300">Ready to edit</p>
+          {/* Conversion arrow */}
+          <div className="absolute -right-2 top-[42%] z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-[#ea580c] text-white shadow-md">
+            <ArrowRight size={22} />
+          </div>
+          {/* Result: the editable Word file you download */}
+          <div className="relative z-[5] -mt-6 ml-10 -rotate-1 rounded-xl border-2 border-[#ea580c] bg-white p-5 shadow-sm dark:bg-slate-900">
+            <div className="flex items-center gap-2">
+              <span className="rounded-md bg-[#ea580c] px-2 py-1 text-xs font-bold text-white">DOCX</span>
+              <span className="flex items-center gap-1.5 text-sm font-bold text-slate-900 dark:text-white">
+                <FileText size={15} /> report.docx
+              </span>
+            </div>
+            <div className="mt-4 h-3 w-2/3 rounded bg-[#ea580c]" />
+            <div className="mt-3 h-3 w-full rounded bg-[#fff7ed] dark:bg-slate-800" />
+            <div className="mt-2 h-3 w-4/5 rounded bg-[#fff7ed] dark:bg-slate-800" />
+            <p className="mt-4 flex items-center gap-1.5 text-sm font-bold text-[#0f766e] dark:text-[#5eead4]">
+              <Check size={16} /> Ready to edit
+            </p>
           </div>
         </div>
       </section>
@@ -96,7 +122,7 @@ export default function Home() {
         <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white">Questions people ask</h2>
         <div className="mt-6 grid gap-4 md:grid-cols-2">
           {[
-            { q: "Is PDF Tools Hub really free?", a: "Yes, for everyday use: 20 conversions a day on the free tier, no account needed. Premium raises the limit to 1,000 a day and removes ads — see Pricing. Payments go through Paddle's secure checkout; nothing on this site collects payment details." },
+            { q: "Is PDF Tools Hub really free?", a: "Yes, for everyday use: around 20 conversions a day for guests as a fair-use guideline, no account needed. Signing in (free) gives a tracked 100 a day. Premium raises the limit to 1,000 a day and removes ads — see Pricing. Payments go through Paddle's secure checkout; nothing on this site collects payment details." },
             { q: "Do you keep my files?", a: "No. Browser tools never upload your files at all. Server tools process them in memory only — nothing is written to disk — and they are gone when the response ends. They are never listed publicly or shared." },
             { q: "What size files can I convert?", a: "PDFs up to 25 MB, and images up to 10 MB each (max 20 per request)." },
             { q: "Will a PDF to Word conversion look identical?", a: "No — text is preserved and larger text becomes headings, but layout, images and tables are approximated. Each tool page states its fidelity limit plainly." },

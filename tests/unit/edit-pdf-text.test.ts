@@ -4,9 +4,11 @@ import { PDFDocument, StandardFonts } from "pdf-lib";
 import * as pdfjs from "pdfjs-dist/legacy/build/pdf.mjs";
 import {
   groupTextItems,
+  filterBackgroundLines,
   removeTextFromContent,
   applyTextEdits,
   type TextEdit,
+  type TextLine,
 } from "@/lib/edit-pdf-text";
 import type { TextItem } from "pdfjs-dist/types/src/display/api";
 
@@ -143,6 +145,61 @@ describe("applyTextEdits round-trip", () => {
     const text = await extractText(out);
     expect(text).toContain("Hello World");
     expect(text).toContain("Second line here");
+  });
+});
+
+describe("filterBackgroundLines", () => {
+  const fakeLine = (text: string, pdfFontSize: number): TextLine =>
+    ({
+      id: `0:${text}-${pdfFontSize}`,
+      pageIndex: 0,
+      text,
+      x: 0,
+      y: 0,
+      width: 100,
+      height: 10,
+      fontSize: pdfFontSize,
+      pdfX: 0,
+      pdfBaselineY: 0,
+      pdfWidth: 100,
+      pdfTop: 10,
+      pdfBottom: 0,
+      pdfFontSize,
+      bold: false,
+      italic: false,
+    }) as TextLine;
+
+  it("keeps only the first copy of a tiny phrase repeated 8+ times", () => {
+    const lines = [
+      fakeLine("Full Name : Sushila Dahal", 11),
+      ...Array.from({ length: 10 }, () => fakeLine("Nepal Police Nepal Police", 7)),
+      fakeLine("Address : Itahari", 11),
+    ];
+    const kept = filterBackgroundLines(lines);
+    expect(kept.map((l) => l.text)).toEqual([
+      "Full Name : Sushila Dahal",
+      "Nepal Police Nepal Police",
+      "Address : Itahari",
+    ]);
+  });
+
+  it("keeps every copy when the phrase is normal-sized", () => {
+    const lines = Array.from({ length: 10 }, () => fakeLine("Item Qty Price", 11));
+    expect(filterBackgroundLines(lines)).toHaveLength(10);
+  });
+
+  it("keeps every copy below the repetition threshold", () => {
+    const lines = Array.from({ length: 7 }, () => fakeLine("Nepal Police", 7));
+    expect(filterBackgroundLines(lines)).toHaveLength(7);
+  });
+
+  it("keeps distinct tiny lines", () => {
+    const lines = [
+      fakeLine("Alpha", 7),
+      fakeLine("Beta", 7),
+      fakeLine("Gamma", 7),
+    ];
+    expect(filterBackgroundLines(lines)).toHaveLength(3);
   });
 });
 

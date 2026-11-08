@@ -1,5 +1,17 @@
 // Edit PDF text (browser): pages render as they really look; click any
 // line of text to edit it in place; the edited PDF keeps the same layout.
+//
+// Sizing (fixed 2026-11-08, second bug round): the render scale used to be
+// computed from the OUTER tool wrapper's width, but the canvas sits two
+// paddings deeper — so the bitmap came out ~17% wider than its display
+// box and every overlay line sat too far right/down, overflowing the
+// container. The scale is now measured from the page container itself
+// (ResizeObserver), and the canvas is displayed at exactly its bitmap
+// size, so 1 bitmap px = 1 CSS px and the overlay aligns exactly.
+// Zoom (Fit / 100% / 150% / 200%) re-renders at the new scale, so a PDF
+// whose visible content only fills part of its page (clip path, UserUnit,
+// scaled XObject — common in generated certificates) can still be read
+// and tapped. Line tap targets are at least 44px tall on touch.
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Loader2, AlertTriangle, Undo2 } from "lucide-react";
@@ -19,10 +31,20 @@ import {
 import { countToolUse, downloadBlob, saveToHistory } from "@/lib/client-tool";
 import type { PDFDocumentProxy } from "pdfjs-dist";
 
+type Zoom = "fit" | 1 | 1.5 | 2;
+const ZOOMS: Zoom[] = ["fit", 1, 1.5, 2];
+const zoomLabel = (z: Zoom) => (z === "fit" ? "Fit to screen" : `${Math.round(z * 100)}%`);
+/** Smallest tap target on touch (px). Lines are far shorter than this at fit scale. */
+const MIN_TAP = 44;
+
+function clamp(v: number, lo: number, hi: number) {
+  return Math.min(hi, Math.max(lo, v));
+}
+
 function EditablePage({
   doc,
   pageIndex,
-  scale,
+  zoom,
   lines,
   edits,
   activeLineId,
@@ -34,7 +56,7 @@ function EditablePage({
 }: {
   doc: PDFDocumentProxy;
   pageIndex: number;
-  scale: number;
+  zoom: Zoom;
   lines: TextLine[];
   edits: Record<string, string>;
   activeLineId: string | null;
@@ -45,27 +67,77 @@ function EditablePage({
   onCancel: () => void;
 }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const renderedRef = useRef(false);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [pageWidthPt, setPageWidthPt] = useState(595);
+  const [fitScale, setFitScale] = useState(0.6);
+  const [measured, setMeasured] = useState(false);
+  const [canvasSize, setCanvasSize] = useState({ w: 0, h: 0 });
+  const renderedScaleRef = useRef<number | null>(null);
+  const renderTokenRef = useRef(0);
 
-  const render = useCallback(
-    (el: HTMLCanvasElement | null) => {
-      canvasRef.current = el;
-      if (!el || renderedRef.current) return;
-      renderedRef.current = true;
-      void renderEditablePage(doc, pageIndex, el, scale)
-        .then((found) => onLines(pageIndex, found))
-        .catch((err: unknown) => {
-          onError(err instanceof Error ? err.message : "Could not read this page.");
-        });
-    },
-    [doc, pageIndex, scale, onLines, onError],
-  );
+  // The page's width in points (each page can differ).
+  useEffect(() => {
+    let cancelled = false;
+    void doc.getPage(pageIndex + 1).then((p) => {
+      if (!cancelled) setPageWidthPt(p.getViewport({ scale: 1 }).width);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [doc, pageIndex]);
+
+  // Fit scale = this page's container width / page width. Re-measured on
+  // resize (e.g. phone rotation), so the page always fills its box.
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const update = () => {
+      const w = el.clientWidth;
+      if (w > 0) {
+        setFitScale(clamp(w / pageWidthPt, 0.1, 2.5));
+        setMeasured(true);
+      }
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [pageWidthPt]);
+
+  const scale = zoom === "fit" ? fitScale : zoom;
+
+  // (Re-)render whenever the effective scale changes. A token drops stale
+  // renders (rapid zoom taps) so a superseded render can never overwrite
+  // the current one or raise its error.
+  useEffect(() => {
+    const el = canvasRef.current;
+    if (!el) return;
+    if (zoom === "fit" && !measured) return;
+    if (renderedScaleRef.current === scale) return;
+    const token = ++renderTokenRef.current;
+    renderedScaleRef.current = scale;
+    void renderEditablePage(doc, pageIndex, el, scale)
+      .then((found) => {
+        if (renderTokenRef.current !== token) return;
+        setCanvasSize({ w: el.width, h: el.height });
+        onLines(pageIndex, found);
+      })
+      .catch((err: unknown) => {
+        if (renderTokenRef.current !== token) return;
+        onError(err instanceof Error ? err.message : "Could not read this page.");
+      });
+  }, [doc, pageIndex, scale, zoom, measured, onLines, onError]);
 
   return (
     <section aria-label={`Page ${pageIndex + 1}`} className="rounded-xl border-2 border-[#99f6e4] bg-white p-2 dark:border-teal-900 dark:bg-slate-900">
       <p className="px-1 pb-2 text-sm font-bold text-slate-900 dark:text-white">Page {pageIndex + 1}</p>
-      <div className="relative mx-auto w-full overflow-hidden">
-        <canvas ref={render} className="block h-auto w-full" aria-label={`Rendered page ${pageIndex + 1}`} />
+      <div ref={containerRef} className="relative mx-auto w-full overflow-x-auto">
+        <canvas
+          ref={canvasRef}
+          className="block"
+          style={canvasSize.w > 0 ? { width: canvasSize.w, height: canvasSize.h } : undefined}
+          aria-label={`Rendered page ${pageIndex + 1}`}
+        />
         {lines.map((line) => {
           const current = edits[line.id] ?? line.text;
           const changed = line.id in edits && edits[line.id] !== line.text;
@@ -87,11 +159,18 @@ function EditablePage({
                   top: line.y - 2,
                   width: Math.max(line.width + 16, 140),
                   height: Math.max(line.height + 6, 28),
-                  fontSize: Math.max(line.fontSize, 12),
+                  // 16px minimum: smaller inputs make iOS Safari zoom the
+                  // whole page on focus.
+                  fontSize: Math.max(line.fontSize, 16),
                 }}
               />
             );
           }
+          // The button is the tap target (at least 44px tall, centred on
+          // the line); the inner span is the tight visual outline, so the
+          // box you see is the line itself, not the finger-sized target.
+          const hitH = Math.max(line.height, MIN_TAP);
+          const hitTop = Math.max(0, line.y - (hitH - line.height) / 2);
           return (
             <button
               key={line.id}
@@ -99,11 +178,23 @@ function EditablePage({
               aria-label={`Edit text: ${line.text}`}
               title={line.text}
               onClick={() => onActivate(line.id)}
-              className={`absolute rounded-sm text-transparent hover:outline-2 hover:outline-dashed hover:outline-[#0d9488] focus:outline-2 focus:outline-dashed focus:outline-[#0d9488] ${
-                changed ? "bg-teal-500/25 outline-2 outline-dashed outline-[#0d9488]" : ""
-              }`}
-              style={{ left: line.x, top: line.y, width: line.width, height: line.height, fontSize: line.fontSize }}
+              className="group absolute rounded-sm text-transparent"
+              style={{ left: line.x - 4, top: hitTop, width: line.width + 8, height: hitH }}
             >
+              <span
+                aria-hidden="true"
+                className={`absolute rounded-sm ${
+                  changed
+                    ? "bg-teal-500/25 outline-2 outline-dashed outline-[#0d9488]"
+                    : "group-hover:outline-2 group-hover:outline-dashed group-hover:outline-[#0d9488] group-focus-visible:outline-2 group-focus-visible:outline-dashed group-focus-visible:outline-[#0d9488]"
+                }`}
+                style={{
+                  left: 4,
+                  top: (hitH - line.height) / 2,
+                  width: line.width,
+                  height: line.height,
+                }}
+              />
               {line.text}
             </button>
           );
@@ -117,9 +208,8 @@ export function EditPdfTextTool() {
   const [files, setFiles] = useState<File[]>([]);
   const [doc, setDoc] = useState<PDFDocumentProxy | null>(null);
   const [numPages, setNumPages] = useState(0);
-  const [scale, setScale] = useState(1);
+  const [zoom, setZoom] = useState<Zoom>("fit");
   const [linesByPage, setLinesByPage] = useState<Record<number, TextLine[]>>({});
-  const [pagesDone, setPagesDone] = useState(0);
   const [edits, setEdits] = useState<Record<string, string>>({});
   const [activeLineId, setActiveLineId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -128,15 +218,16 @@ export function EditPdfTextTool() {
   const [result, setResult] = useState<{ url: string; name: string; size: number } | null>(null);
   const [counterKey, setCounterKey] = useState(0);
   const bytesRef = useRef<Uint8Array | null>(null);
-  const wrapperRef = useRef<HTMLDivElement | null>(null);
   const shownPages = Math.min(numPages, MAX_EDIT_PAGES);
+  // Derived, not state: re-renders (zoom/resize) re-fire onLines for the
+  // same page, so a counter would inflate.
+  const pagesDone = Object.keys(linesByPage).length;
 
   const handleFiles = useCallback((next: File[]) => {
     setFiles(next);
     setDoc(null);
     setNumPages(0);
     setLinesByPage({});
-    setPagesDone(0);
     setEdits({});
     setActiveLineId(null);
     setError("");
@@ -150,13 +241,8 @@ export function EditPdfTextTool() {
         bytesRef.current = bytes;
         const pdfjs = await loadPdfjs();
         const loaded = await pdfjs.getDocument({ data: bytes.slice() }).promise;
-        const first = await loaded.getPage(1);
-        const base = first.getViewport({ scale: 1 });
-        const wrapWidth = wrapperRef.current?.clientWidth || 760;
-        const s = Math.min(1.6, Math.max(0.5, wrapWidth / base.width));
         setDoc(loaded);
         setNumPages(loaded.numPages);
-        setScale(s);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Could not read this PDF.");
       }
@@ -170,7 +256,6 @@ export function EditPdfTextTool() {
     setDoc(null);
     setNumPages(0);
     setLinesByPage({});
-    setPagesDone(0);
     setEdits({});
     setActiveLineId(null);
     setError("");
@@ -179,7 +264,6 @@ export function EditPdfTextTool() {
 
   const onLines = useCallback((pageIndex: number, lines: TextLine[]) => {
     setLinesByPage((cur) => ({ ...cur, [pageIndex]: lines }));
-    setPagesDone((n) => n + 1);
   }, []);
 
   const onError = useCallback((msg: string) => setError(msg), []);
@@ -197,11 +281,15 @@ export function EditPdfTextTool() {
 
   const totalLines = Object.values(linesByPage).reduce((n, ls) => n + ls.length, 0);
   const editCount = Object.keys(edits).length;
+  // Look lines up by id, not by array index: filterBackgroundLines drops
+  // repeated watermark lines, so a line's id ("page:groupIndex") is no
+  // longer its position in the filtered array — an index lookup would
+  // silently lose the edit (empty "Your edits" list, empty download).
+  const allLines = Object.values(linesByPage).flat();
   const editedList = Object.entries(edits)
     .map(([id, value]) => {
-      const [p, l] = id.split(":").map(Number);
-      const line = linesByPage[p]?.[l];
-      return line ? { id, page: p, oldText: line.text, newText: value, line } : null;
+      const line = allLines.find((l) => l.id === id);
+      return line ? { id, page: line.pageIndex, oldText: line.text, newText: value, line } : null;
     })
     .filter((e): e is { id: string; page: number; oldText: string; newText: string; line: TextLine } => Boolean(e));
 
@@ -270,7 +358,7 @@ export function EditPdfTextTool() {
   }
 
   return (
-    <div ref={wrapperRef} className="rounded-2xl border-2 border-[#99f6e4] bg-white p-5 dark:border-teal-900 dark:bg-slate-900">
+    <div className="rounded-2xl border-2 border-[#99f6e4] bg-white p-5 dark:border-teal-900 dark:bg-slate-900">
       <UploadZone
         files={files}
         onFilesChange={handleFiles}
@@ -301,12 +389,36 @@ export function EditPdfTextTool() {
       )}
       {doc && (
         <div className="mt-5 space-y-5">
+          <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Zoom">
+            <span className="text-sm font-bold text-slate-900 dark:text-white">Zoom:</span>
+            {ZOOMS.map((z) => (
+              <button
+                key={String(z)}
+                type="button"
+                aria-pressed={zoom === z}
+                onClick={() => {
+                  setZoom(z);
+                  setActiveLineId(null);
+                }}
+                className={`min-h-[36px] rounded-lg border px-3 py-1 text-sm font-bold ${
+                  zoom === z
+                    ? "border-[#0d9488] bg-[#0d9488] text-white"
+                    : "border-slate-300 bg-white text-slate-700 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200"
+                }`}
+              >
+                {zoomLabel(z)}
+              </button>
+            ))}
+            <span className="text-sm text-slate-600 dark:text-slate-300">
+              Zoom in if the text looks small.
+            </span>
+          </div>
           {Array.from({ length: shownPages }, (_, i) => (
             <EditablePage
               key={`${files[0].name}-${files[0].size}-${i}`}
               doc={doc}
               pageIndex={i}
-              scale={scale}
+              zoom={zoom}
               lines={linesByPage[i] ?? []}
               edits={edits}
               activeLineId={activeLineId}

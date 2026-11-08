@@ -127,6 +127,28 @@ export function groupTextItems(items: TextItem[]): { text: string; items: TextIt
   return lines.filter((l) => l.text.length > 0);
 }
 
+/**
+ * Drop repeated background/watermark lines: the same tiny text printed
+ * many times across a page (a certificate's faint background word, a
+ * repeated footer). Real content is never the identical phrase 8+ times
+ * at under 8pt — and the first copy is always kept, so nothing is fully
+ * hidden. Without this, a watermarked certificate reports ~96 lines and
+ * the list is mostly un-tappable clutter.
+ */
+export function filterBackgroundLines(lines: TextLine[]): TextLine[] {
+  const counts = new Map<string, number>();
+  for (const l of lines) counts.set(norm(l.text), (counts.get(norm(l.text)) ?? 0) + 1);
+  const seen = new Set<string>();
+  return lines.filter((l) => {
+    const key = norm(l.text);
+    if ((counts.get(key) ?? 0) >= 8 && l.pdfFontSize < 8) {
+      if (seen.has(key)) return false;
+      seen.add(key);
+    }
+    return true;
+  });
+}
+
 function styleOf(fontName: string): { bold: boolean; italic: boolean } {
   const n = (fontName || "").toLowerCase();
   return { bold: n.includes("bold"), italic: n.includes("italic") || n.includes("oblique") };
@@ -168,59 +190,66 @@ export async function renderEditablePage(
     const first = group.items[0];
     let x0 = Infinity;
     let x1 = -Infinity;
-    let top = Infinity;
-    let bottom = -Infinity;
-    let fontSizeCss = 0;
+    // PDF user-space edges (y grows up): pdfBottomEdge is the lowest
+    // glyph edge, pdfTopEdge the highest.
+    let pdfBottomEdge = Infinity;
+    let pdfTopEdge = -Infinity;
+    let fontSizePt = 0;
     let bold = false;
     let italic = false;
     for (const item of group.items) {
       const e = item.transform[4] as number;
       const f = item.transform[5] as number;
       const size = Math.hypot((item.transform[2] as number) || 0, (item.transform[3] as number) || 0);
-      fontSizeCss = Math.max(fontSizeCss, size);
+      fontSizePt = Math.max(fontSizePt, size);
       x0 = Math.min(x0, e);
       x1 = Math.max(x1, e + item.width);
-      top = Math.min(top, f - item.height);
-      bottom = Math.max(bottom, f + item.height * 0.2);
+      pdfBottomEdge = Math.min(pdfBottomEdge, f - item.height);
+      pdfTopEdge = Math.max(pdfTopEdge, f + item.height * 0.2);
       const s = styleOf(item.fontName);
       bold = bold || s.bold;
       italic = italic || s.italic;
     }
-    if (!isFinite(x0) || !isFinite(top) || x1 <= x0 || bottom <= top) continue;
-    // Convert all four corners so rotated pages still get a correct box.
-    const corners = [
-      viewport.convertToPdfPoint(x0, top),
-      viewport.convertToPdfPoint(x1, top),
-      viewport.convertToPdfPoint(x0, bottom),
-      viewport.convertToPdfPoint(x1, bottom),
+    if (!isFinite(x0) || !isFinite(pdfBottomEdge) || x1 <= x0 || pdfTopEdge <= pdfBottomEdge) continue;
+    // Screen box: the item transforms are already PDF user-space
+    // coordinates, so convert them through the viewport (which scales and
+    // flips Y, and handles rotation). The old code did the opposite — it
+    // stored the raw PDF points as screen px (overlay shifted right and
+    // vertically mirrored) and ran them back through convertToPdfPoint
+    // (edited text drawn mirrored/off-page in the download). Both are
+    // fixed here: screen coords come from convertToViewportPoint, PDF
+    // coords are the raw transform values.
+    const screenCorners = [
+      viewport.convertToViewportPoint(x0, pdfBottomEdge),
+      viewport.convertToViewportPoint(x1, pdfBottomEdge),
+      viewport.convertToViewportPoint(x0, pdfTopEdge),
+      viewport.convertToViewportPoint(x1, pdfTopEdge),
     ];
-    const pdfXs = corners.map((c) => c[0] as number);
-    const pdfYs = corners.map((c) => c[1] as number);
-    const pdfX = Math.min(...pdfXs);
-    const pdfRight = Math.max(...pdfXs);
-    const pdfTop = Math.max(...pdfYs);
-    const pdfBottom = Math.min(...pdfYs);
-    const baseline = viewport.convertToPdfPoint(x0, first.transform[5] as number);
+    const sxs = screenCorners.map((c) => c[0] as number);
+    const sys = screenCorners.map((c) => c[1] as number);
+    const sx = Math.min(...sxs);
+    const sy = Math.min(...sys);
     lines.push({
       id: `${pageIndex}:${lineIndex}`,
       pageIndex,
       text: group.text,
-      x: x0,
-      y: top,
-      width: x1 - x0,
-      height: bottom - top,
-      fontSize: fontSizeCss,
-      pdfX,
-      pdfBaselineY: baseline[1] as number,
-      pdfWidth: pdfRight - pdfX,
-      pdfTop,
-      pdfBottom,
-      pdfFontSize: fontSizeCss / scale,
+      x: sx,
+      y: sy,
+      width: Math.max(...sxs) - sx,
+      height: Math.max(...sys) - sy,
+      // Display size is the point size scaled by the render scale.
+      fontSize: fontSizePt * scale,
+      pdfX: x0,
+      pdfBaselineY: first.transform[5] as number,
+      pdfWidth: x1 - x0,
+      pdfTop: pdfTopEdge,
+      pdfBottom: pdfBottomEdge,
+      pdfFontSize: fontSizePt,
       bold,
       italic,
     });
   }
-  return lines;
+  return filterBackgroundLines(lines);
 }
 
 // ---------------------------------------------------------------------------

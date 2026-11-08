@@ -8,7 +8,54 @@ export async function loadPdfLib() {
 }
 
 let pdfjsPromise: Promise<typeof import("pdfjs-dist/legacy/build/pdf.mjs")> | null = null;
+
+/**
+ * Old Safari (before Safari 18 / iOS 18) has no
+ * `ReadableStream.prototype[Symbol.asyncIterator]`, and pdf.js's
+ * `page.getTextContent()` iterates the text stream with `for await...of`.
+ * The page still renders — rendering never touches that API, and
+ * `Promise.withResolvers` is polyfilled by core-js in the bundle — so the
+ * tool looks fine until text extraction throws "undefined is not a
+ * function (near '...t of e...')": the minified for-await loop over the
+ * stream. Install the standard WHATWG async-iterator adapter before
+ * pdf.js loads, so text extraction works on old Safari too. No-op on
+ * browsers that already have the method.
+ */
+export function ensureReadableStreamAsyncIterator(): void {
+  if (typeof ReadableStream === "undefined") return;
+  const proto = ReadableStream.prototype as unknown as Record<symbol, unknown>;
+  if (typeof proto[Symbol.asyncIterator] === "function") return;
+  const iterator = function (
+    this: ReadableStream,
+  ): AsyncIterator<unknown> & { [Symbol.asyncIterator](): AsyncIterator<unknown> } {
+    const reader = this.getReader();
+    return {
+      async next() {
+        const r = await reader.read();
+        return { value: r.value, done: r.done };
+      },
+      async return() {
+        await reader.cancel();
+        return { done: true, value: undefined };
+      },
+      async throw(err: unknown) {
+        await reader.cancel(err);
+        throw err;
+      },
+      [Symbol.asyncIterator]() {
+        return this;
+      },
+    };
+  };
+  Object.defineProperty(proto, Symbol.asyncIterator, {
+    value: iterator,
+    writable: true,
+    configurable: true,
+  });
+}
+
 export async function loadPdfjs() {
+  ensureReadableStreamAsyncIterator();
   if (!pdfjsPromise) {
     pdfjsPromise = (async () => {
       const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");

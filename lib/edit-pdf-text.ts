@@ -71,9 +71,23 @@ function isTextItem(item: unknown): item is TextItem {
   return typeof item === "object" && item !== null && "str" in item && "transform" in item;
 }
 
+function isUsableItem(item: TextItem): boolean {
+  // Real-world PDFs (custom encodings, Type3 fonts, stamped layouts) can
+  // hand pdf.js items with a missing or short transform, or a NaN width —
+  // one such item used to crash the whole page's line grouping. Skip it
+  // and keep the rest editable instead.
+  if (typeof item.str !== "string" || item.str.trim().length === 0) return false;
+  const t = item.transform as unknown;
+  if (!Array.isArray(t) || t.length < 6) return false;
+  for (const v of t) if (typeof v !== "number" || !Number.isFinite(v)) return false;
+  if (typeof item.width !== "number" || !Number.isFinite(item.width)) return false;
+  if (typeof item.height !== "number" || !Number.isFinite(item.height)) return false;
+  return true;
+}
+
 /** Group pdf.js text items into visual lines (same baseline, left to right). */
 export function groupTextItems(items: TextItem[]): { text: string; items: TextItem[] }[] {
-  const usable = items.filter((i) => i.str && i.str.trim().length > 0);
+  const usable = items.filter(isUsableItem);
   const sorted = [...usable].sort((a, b) => {
     const dy = (a.transform[5] as number) - (b.transform[5] as number);
     if (Math.abs(dy) > 1) return dy;
@@ -137,7 +151,17 @@ export async function renderEditablePage(
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   await page.render({ canvas, viewport }).promise;
-  const content = await page.getTextContent();
+  let content;
+  try {
+    content = await page.getTextContent();
+  } catch {
+    // Never surface a raw engine error ("undefined is not a function")
+    // for a page whose text cannot be read: say plainly which page it
+    // was, and that the other pages still work.
+    throw new Error(
+      `Could not read the text on page ${pageIndex + 1} — this page may use a format the editor cannot read. The other pages still work; if the page is a scan, run it through the OCR tool first.`,
+    );
+  }
   const items = content.items.filter(isTextItem);
   const lines: TextLine[] = [];
   for (const [lineIndex, group] of groupTextItems(items).entries()) {

@@ -145,3 +145,36 @@ describe("applyTextEdits round-trip", () => {
     expect(text).toContain("Second line here");
   });
 });
+
+describe("groupTextItems hardening", () => {
+  const good = (str: string, x: number, y: number): TextItem =>
+    ({
+      str,
+      dir: "ltr",
+      width: 50,
+      height: 12,
+      transform: [11, 0, 0, 11, x, y],
+      fontName: "g1",
+    }) as TextItem;
+
+  it("skips malformed items and still groups the good ones", () => {
+    const items = [
+      good("Hello", 10, 100),
+      { str: "BROKEN", dir: "ltr", width: 50, height: 12, transform: [11, 0], fontName: "g1" },
+      { str: "NAN", dir: "ltr", width: Number.NaN, height: 12, transform: [11, 0, 0, 11, 80, 100], fontName: "g1" },
+      { str: "INF", dir: "ltr", width: 50, height: 12, transform: [11, 0, 0, 11, Number.POSITIVE_INFINITY, 100], fontName: "g1" },
+      good("World", 70, 100),
+      good("Second line", 10, 80),
+    ] as TextItem[];
+    const lines = groupTextItems(items);
+    // Lines come back in ascending-baseline order (bottom of page first).
+    expect(lines.map((l) => l.text)).toEqual(["Second line", "Hello World"]);
+  });
+
+  it("returns no lines when every item is malformed", () => {
+    const items = [
+      { str: "X", dir: "ltr", width: 1, height: 1, transform: undefined, fontName: "g1" },
+    ] as unknown as TextItem[];
+    expect(groupTextItems(items)).toEqual([]);
+  });
+});

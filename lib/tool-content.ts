@@ -18,6 +18,21 @@ export const TOOL_CONTENT: Record<string, ToolContent> = {
     note: "Fidelity limit: layout, images and tables are approximated; text is preserved.",
     limits: "PDF up to 25 MB. Free tier: around 20 conversions a day for guests (fair-use guideline).",
   },
+  "edit-pdf-text": {
+    slug: "edit-pdf-text", title: "Edit PDF text", meta: "Edit text in a PDF free, in your browser. Click any line, change the words, keep the same layout.",
+    description: "Fix a typo without rebuilding the whole document. Upload a PDF, click any line of text, type the correction in place, and download the edited PDF — the text stays where it was, at the same size.",
+    accept: ".pdf,application/pdf", multiple: false, fieldName: "file", endpoint: "", resultLabel: "Your edited PDF",
+    howTo: ["Upload your PDF (up to 25 MB).", "Click any line of text and type your correction — the line stays in the same place.", "Click Download edited PDF and save the fixed file."],
+    useCases: ["Fixing a typo in a contract or report that only exists as a PDF", "Updating a name, date or price on a form without retyping the page", "Correcting a spelling mistake before sending a document"],
+    faqs: [
+      { q: "Will the edited text look exactly like the original?", a: "Almost. The text stays in the same place at the same size, but it is redrawn in a standard font (Helvetica), because the original embedded font usually cannot be reused. The letter shapes may look slightly different from the original font. Longer text is shrunk slightly to fit the original space." },
+      { q: "Can I still search the PDF for the old words?", a: "Usually not — the original words are removed from the file where they can be matched. But some PDFs store text in a custom font encoding that cannot be matched, so the old words are covered up instead: invisible on the page, but still findable by text search. The visible page is always correct." },
+      { q: "What about scanned PDFs?", a: "Scanned pages are pictures of text, not real text, so there is nothing to click. Make the scan searchable first with OCR, then edit the result here." },
+      { q: "Is there a page or size limit?", a: "Files up to 25 MB, first 30 pages. Around 20 conversions a day for guests as a fair-use guideline." },
+    ],
+    note: "Browser editing: files never leave your device. Edited text is redrawn in a standard font at the same size and position — the layout stays the same, but the letter shapes may look slightly different from the original font. Works best on plain white pages.",
+    limits: "PDF up to 25 MB, first 30 pages. Free tier: around 20 conversions a day for guests (fair-use guideline).",
+  },
   "word-to-pdf": {
     slug: "word-to-pdf", title: "Word to PDF", meta: "Convert a Word document to PDF free. Headings, bold and italic text are kept; complex layout is simplified.",
     description: "Share a Word document without worrying that fonts or formatting will shift on someone else's computer. This tool reads your .docx file and renders a clean PDF from its headings, paragraphs, bold and italic text.",

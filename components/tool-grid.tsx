@@ -5,12 +5,13 @@ import { useState } from "react";
 import Link from "next/link";
 import {
   FileText, FileDown, Image as ImageIcon, Combine, Scissors, Shrink,
-  FileImage, RotateCw, LayoutGrid, Droplet, Hash, ScanText, ArrowRight,
+  FileImage, RotateCw, LayoutGrid, Droplet, Hash, ScanText, Pencil, ArrowRight,
 } from "lucide-react";
 import { TOOLS } from "@/lib/site";
 
 const ICONS: Record<string, React.ReactNode> = {
   "file-text": <FileText size={30} aria-hidden="true" />,
+  "pencil": <Pencil size={30} aria-hidden="true" />,
   "file-down": <FileDown size={30} aria-hidden="true" />,
   image: <ImageIcon size={30} aria-hidden="true" />,
   combine: <Combine size={30} aria-hidden="true" />,

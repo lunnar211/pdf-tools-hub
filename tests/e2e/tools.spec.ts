@@ -3,7 +3,31 @@
 // no binary fixtures live in the repo.
 import { test, expect, type Page } from "@playwright/test";
 import { PDFDocument } from "pdf-lib";
+import * as pdfjs from "pdfjs-dist/legacy/build/pdf.mjs";
 import { readFile } from "node:fs/promises";
+
+/** Extract the visible text of a PDF (node-side, via pdf.js). */
+async function extractPdfText(bytes: Uint8Array): Promise<string> {
+  // pdfjs-dist 6 rejects Buffer; copy into a plain Uint8Array.
+  const data = new Uint8Array(bytes);
+  const doc = await pdfjs.getDocument({ data }).promise;
+  let out = "";
+  for (let p = 1; p <= doc.numPages; p++) {
+    const page = await doc.getPage(p);
+    const tc = await page.getTextContent();
+    out += tc.items.map((i) => ("str" in i ? i.str : "")).join(" ") + "\n";
+  }
+  return out;
+}
+
+/** One-page PDF with two real text lines, at known positions. */
+async function makeEditablePdf(): Promise<Buffer> {
+  const doc = await PDFDocument.create();
+  const page = doc.addPage([595, 842]);
+  page.drawText("Hello World", { x: 50, y: 800, size: 24 });
+  page.drawText("Second line here", { x: 50, y: 760, size: 14 });
+  return Buffer.from(await doc.save());
+}
 
 async function makePdf(pages: number): Promise<Buffer> {
   const doc = await PDFDocument.create();
@@ -207,6 +231,31 @@ test("watermark and page numbers produce PDFs", async ({ page }) => {
   download = await downloadPromise;
   bytes = await readFile((await download.path())!);
   expect(bytes.subarray(0, 4).toString("ascii")).toBe("%PDF");
+});
+
+test("edit-pdf-text edits a word in place and downloads", async ({ page }) => {
+  const pdf = await makeEditablePdf();
+  await page.goto("/edit-pdf-text");
+  await page.locator('input[type="file"]').first().setInputFiles([
+    { name: "doc.pdf", buffer: pdf, mimeType: "application/pdf" },
+  ]);
+  // The page renders as it really looks; the line is clickable.
+  await expect(page.getByRole("button", { name: "Edit text: Hello World" })).toBeVisible();
+  await page.getByRole("button", { name: "Edit text: Hello World" }).click();
+  const input = page.getByLabel("Edit text: Hello World");
+  await expect(input).toBeVisible();
+  await input.fill("Hello Mars");
+  await input.press("Enter");
+  await expect(page.getByText("Hello Mars").first()).toBeVisible();
+  const downloadPromise = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Download edited PDF" }).click();
+  const download = await downloadPromise;
+  const bytes = await readFile((await download.path())!);
+  expect(bytes.subarray(0, 4).toString("ascii")).toBe("%PDF");
+  const text = await extractPdfText(bytes);
+  expect(text).toContain("Hello Mars");
+  expect(text).not.toContain("Hello World");
+  expect(text).toContain("Second line here");
 });
 
 test("usage counter API returns real numbers", async ({ request }) => {

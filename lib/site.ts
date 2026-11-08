@@ -9,6 +9,7 @@ export const SITE_NAME = "PDF Tools Hub";
 
 export const TOOL_SLUGS = [
   "pdf-to-word",
+  "edit-pdf-text",
   "word-to-pdf",
   "image-to-pdf",
   "merge-pdf",
@@ -29,6 +30,7 @@ export type ToolDef = {
 };
 export const TOOLS: ToolDef[] = [
   { slug: "pdf-to-word", title: "PDF to Word", short: "Extract the text from a PDF into an editable Word document.", icon: "file-text" },
+  { slug: "edit-pdf-text", title: "Edit PDF text", short: "Click any line of text in a PDF and change the words, in your browser — same place, same size.", icon: "pencil" },
   { slug: "word-to-pdf", title: "Word to PDF", short: "Turn a Word document into a clean, shareable PDF.", icon: "file-down" },
   { slug: "image-to-pdf", title: "Image to PDF", short: "Combine JPG, PNG, WebP, BMP and HEIC photos into one PDF — converted in your browser.", icon: "image" },
   { slug: "merge-pdf", title: "Merge PDF", short: "Join several PDFs into one file, in the order you choose.", icon: "combine" },

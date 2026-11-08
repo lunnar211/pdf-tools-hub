@@ -11,7 +11,14 @@ export const NEXT_TOOLS: Record<ToolSlug, NextTool[]> = {
     { slug: "merge-pdf", reason: "Combine it with other PDFs" },
     { slug: "split-pdf", reason: "Split it into separate files" },
   ],
-  "pdf-to-word": [{ slug: "word-to-pdf", reason: "Turn the edited document back into a PDF" }],
+  "pdf-to-word": [
+    { slug: "word-to-pdf", reason: "Turn the edited document back into a PDF" },
+    { slug: "edit-pdf-text", reason: "Edit the text right in the PDF instead" },
+  ],
+  "edit-pdf-text": [
+    { slug: "compress-pdf", reason: "Shrink the edited file for email" },
+    { slug: "merge-pdf", reason: "Combine it with other PDFs" },
+  ],
   "word-to-pdf": [
     { slug: "merge-pdf", reason: "Combine it with other PDFs" },
     { slug: "compress-pdf", reason: "Shrink it for email" },
@@ -35,6 +42,7 @@ export const NEXT_TOOLS: Record<ToolSlug, NextTool[]> = {
   "page-numbers": [{ slug: "watermark-pdf", reason: "Add a watermark too" }],
   "ocr-pdf": [
     { slug: "pdf-to-word", reason: "Edit the recognised text as a document" },
+    { slug: "edit-pdf-text", reason: "Fix the recognised text in place" },
     { slug: "compress-pdf", reason: "Shrink the searchable file" },
   ],
 };

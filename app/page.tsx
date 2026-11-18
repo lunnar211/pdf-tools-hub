@@ -2,7 +2,6 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { ShieldCheck, Zap, Trash2, Sparkles, Users } from "lucide-react";
 import { SISTER_SITE_URL, LEADSFORCEGEN_URL } from "@/lib/site";
-import { Reveal } from "@/components/motion/Reveal";
 
 // Heavy client pieces are code-split off the first paint: the homepage
 // ships no PDF/OCR machinery and no motion library above the fold.
@@ -77,13 +76,13 @@ export default function Home() {
             { icon: <Zap size={26} aria-hidden="true" />, t: "No account for free use", d: "The free tier needs no sign-up. Just open a tool and convert." },
             { icon: <Trash2 size={26} aria-hidden="true" />, t: "Nothing kept behind your back", d: "No public file listings, no file gallery, no reuse of your documents." },
           ].map((s, i) => (
-            <Reveal key={s.t} delay={i * 0.03} className="h-full">
+            <div key={s.t} className="h-full">
             <div className="dog-ear h-full rounded-lg bg-white p-5 dark:bg-slate-900">
               <span className="text-[#0d9488] dark:text-[#5eead4]">{s.icon}</span>
               <h3 className="mt-2 text-lg font-bold text-slate-900 dark:text-white">{s.t}</h3>
               <p className="mt-1 text-slate-600 dark:text-slate-300">{s.d}</p>
             </div>
-            </Reveal>
+            </div>
           ))}
         </div>
       </section>
@@ -98,12 +97,12 @@ export default function Home() {
             { q: "Will a PDF to Word conversion look identical?", a: "No — text is preserved and larger text becomes headings, but layout, images and tables are approximated. Each tool page states its fidelity limit plainly." },
             { q: "Can I password-protect or unlock a PDF here?", a: "No, and that is deliberate. Real PDF encryption is not supported by the libraries this site uses (pdf-lib cannot encrypt or open encrypted PDFs), so a password field here would be fake security. No fake lock is offered." },
           ].map((f, i) => (
-            <Reveal key={f.q} delay={i * 0.03} className="h-full">
+            <div key={f.q} className="h-full">
             <div className="h-full rounded-xl border border-[#99f6e4] bg-white p-5 dark:border-teal-900 dark:bg-slate-900">
               <h3 className="font-bold text-slate-900 dark:text-white">{f.q}</h3>
               <p className="mt-1 text-slate-600 dark:text-slate-300">{f.a}</p>
             </div>
-            </Reveal>
+            </div>
           ))}
         </div>
       </section>
@@ -114,25 +113,25 @@ export default function Home() {
       <section className="mx-auto max-w-6xl px-4 pb-16" aria-label="Our other projects">
         <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white">Our other projects</h2>
         <div className="mt-6 grid gap-4 sm:grid-cols-2">
-          <Reveal className="h-full">
+          <div className="h-full">
           <a href={SISTER_SITE_URL} target="_blank" rel="noopener noreferrer" className="block h-full rounded-lg border-2 border-[#99f6e4] bg-white p-6 hover:border-[#0d9488] dark:border-teal-900 dark:bg-slate-900">
             <Sparkles className="text-[#ea580c]" size={28} aria-hidden="true" />
             <h3 className="mt-3 text-xl font-bold text-slate-900 dark:text-white">AI Studio</h3>
             <p className="mt-1 text-slate-600 dark:text-slate-300">AI logo generation and AI photo enhancement, from the same team.</p>
           </a>
-          </Reveal>
-          <Reveal delay={0.03} className="h-full">
+          </div>
+          <div className="h-full">
           <a href={LEADSFORCEGEN_URL} target="_blank" rel="noopener noreferrer" className="block h-full rounded-lg border-2 border-[#99f6e4] bg-white p-6 hover:border-[#0d9488] dark:border-teal-900 dark:bg-slate-900">
             <Users className="text-[#ea580c]" size={28} aria-hidden="true" />
             <h3 className="mt-3 text-xl font-bold text-slate-900 dark:text-white">LeadsForceGen</h3>
             <p className="mt-1 text-slate-600 dark:text-slate-300">Find business leads for outreach, with a free daily tier.</p>
           </a>
-          </Reveal>
+          </div>
         </div>
       </section>
 
       <section className="mx-auto max-w-6xl px-4 pb-16" aria-label="Android app">
-        <Reveal>
+        <div>
         <div className="rounded-lg border-2 border-[#99f6e4] bg-white p-6 dark:border-teal-900 dark:bg-slate-900">
           <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white">PDF Tools Hub on Android</h2>
           <p className="mt-2 text-slate-600 dark:text-slate-300">
@@ -145,7 +144,7 @@ export default function Home() {
             <a href="https://github.com/lunnar211/android-apps/releases" target="_blank" rel="noopener noreferrer" className="underline">All Android apps on GitHub</a>
           </p>
         </div>
-        </Reveal>
+        </div>
       </section>
     </main>
   );

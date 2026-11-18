@@ -1,18 +1,26 @@
+import dynamic from "next/dynamic";
 import Link from "next/link";
-import { ShieldCheck, Zap, Trash2, Sparkles, Users, ArrowRight, FileText, Check } from "lucide-react";
+import { ShieldCheck, Zap, Trash2, Sparkles, Users } from "lucide-react";
 import { SISTER_SITE_URL, LEADSFORCEGEN_URL } from "@/lib/site";
-import { PremiumSection } from "@/components/premium-section";
-import { ToolGrid } from "@/components/tool-grid";
-import { AdSlot } from "@/components/ad-slot";
 import { Reveal } from "@/components/motion/Reveal";
+
+// Heavy client pieces are code-split off the first paint: the homepage
+// ships no PDF/OCR machinery and no motion library above the fold.
+const ToolGrid = dynamic(() => import("@/components/tool-grid").then((m) => m.ToolGrid));
+const HeroDemo = dynamic(() => import("@/components/hero-demo").then((m) => m.HeroDemo));
+const PremiumSection = dynamic(() => import("@/components/premium-section").then((m) => m.PremiumSection));
+const AdSlot = dynamic(() => import("@/components/ad-slot").then((m) => m.AdSlot));
 
 export default function Home() {
   return (
     <main>
-      {/* Hero: the memorable element is the document stack on the right */}
-      <section className="mx-auto grid max-w-6xl items-center gap-10 px-4 py-12 lg:grid-cols-2 lg:py-16">
-        <Reveal>
-          <h1 className="text-4xl font-extrabold leading-tight text-slate-900 sm:text-5xl dark:text-white">
+      {/* Hero: the desk. Headline on the left, a real working tray on the right — visible on phones too. */}
+      <section className="mx-auto grid max-w-6xl items-start gap-10 px-4 py-12 lg:grid-cols-2 lg:py-16">
+        <div>
+          <p className="font-mono text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+            The paper desk for PDF work
+          </p>
+          <h1 className="mt-2 text-4xl font-extrabold leading-tight text-slate-900 sm:text-5xl dark:text-white">
             PDF work, done in a minute, without installing anything
           </h1>
           <p className="mt-4 max-w-xl text-lg text-slate-600 dark:text-slate-300">
@@ -22,59 +30,21 @@ export default function Home() {
             <Link href="/pdf-to-word" className="inline-flex min-h-[44px] items-center rounded-lg bg-[#ea580c] px-5 py-2.5 font-semibold text-white hover:bg-[#c2410c]">Start converting</Link>
             <Link href="/merge-pdf" className="inline-flex min-h-[44px] items-center rounded-lg border-2 border-[#0d9488] px-5 py-2.5 font-semibold text-[#0f766e] hover:bg-white dark:text-[#5eead4]">Merge PDFs</Link>
           </div>
-          <p className="mt-4 text-sm text-slate-600 dark:text-slate-300">Free for guests: around 20 conversions a day (fair-use guideline). PDFs up to 25 MB. Sign in free for a tracked 100 a day.</p>
-          <ul className="mt-4 flex flex-wrap gap-2 text-sm font-semibold" aria-label="Trust badges">
-            <li className="rounded-full border border-[#99f6e4] px-3 py-1 text-[#0f766e] dark:border-teal-900 dark:text-[#5eead4]">✓ No watermark on your files</li>
-            <li className="rounded-full border border-[#99f6e4] px-3 py-1 text-[#0f766e] dark:border-teal-900 dark:text-[#5eead4]">✓ Browser tools never upload your files</li>
-            <li className="rounded-full border border-[#99f6e4] px-3 py-1 text-[#0f766e] dark:border-teal-900 dark:text-[#5eead4]">✓ Server files never stored</li>
+          <p className="mt-4 font-mono text-sm text-slate-600 dark:text-slate-300">report.pdf · 3 pages · 2.1 MB — that is all a file is here: pages, not data.</p>
+          <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">Free for guests: around 20 conversions a day (fair-use guideline). PDFs up to 25 MB. Sign in free for a tracked 100 a day.</p>
+          <ul className="mt-4 flex flex-wrap gap-3" aria-label="Trust stamps">
+            <li><span className="stamp">No watermark</span></li>
+            <li><span className="stamp">Browser tools never upload</span></li>
+            <li><span className="stamp stamp-orange">Server files never stored</span></li>
           </ul>
-        </Reveal>
-        <div aria-hidden="true" className="relative mx-auto hidden w-full max-w-sm sm:block">
-          {/* Source: the PDF you upload */}
-          <div className="rotate-2 rounded-xl border-2 border-[#99f6e4] bg-white p-5 dark:border-teal-800 dark:bg-slate-900">
-            <div className="flex items-center gap-2">
-              <span className="rounded-md bg-[#0f766e] px-2 py-1 text-xs font-bold text-white">PDF</span>
-              <span className="text-sm font-bold text-slate-900 dark:text-white">report.pdf · 3 pages</span>
-            </div>
-            <div className="mt-4 h-3 w-3/4 rounded bg-[#0d9488]" />
-            <div className="mt-3 h-3 w-full rounded bg-[#f0fdfa] dark:bg-slate-800" />
-            <div className="mt-2 h-3 w-5/6 rounded bg-[#f0fdfa] dark:bg-slate-800" />
-            <div className="mt-2 h-3 w-2/3 rounded bg-[#f0fdfa] dark:bg-slate-800" />
-            <div className="mt-4 flex gap-2">
-              <span className="h-9 flex-1 rounded-md bg-[#f0fdfa] dark:bg-slate-800" />
-              <span className="h-9 flex-1 rounded-md bg-[#f0fdfa] dark:bg-slate-800" />
-            </div>
-          </div>
-          {/* Conversion arrow */}
-          <div className="absolute -right-2 top-[42%] z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-[#ea580c] text-white shadow-md">
-            <ArrowRight size={22} />
-          </div>
-          {/* Result: the editable Word file you download */}
-          <div className="relative z-[5] -mt-6 ml-10 -rotate-1 rounded-xl border-2 border-[#ea580c] bg-white p-5 shadow-sm dark:bg-slate-900">
-            <div className="flex items-center gap-2">
-              <span className="rounded-md bg-[#ea580c] px-2 py-1 text-xs font-bold text-white">DOCX</span>
-              <span className="flex items-center gap-1.5 text-sm font-bold text-slate-900 dark:text-white">
-                <FileText size={15} /> report.docx
-              </span>
-            </div>
-            <div className="mt-4 h-3 w-2/3 rounded bg-[#ea580c]" />
-            <div className="mt-3 h-3 w-full rounded bg-[#fff7ed] dark:bg-slate-800" />
-            <div className="mt-2 h-3 w-4/5 rounded bg-[#fff7ed] dark:bg-slate-800" />
-            <p className="mt-4 flex items-center gap-1.5 text-sm font-bold text-[#0f766e] dark:text-[#5eead4]">
-              <Check size={16} /> Ready to edit
-            </p>
-          </div>
         </div>
+        <HeroDemo />
       </section>
 
       <section className="mx-auto max-w-6xl px-4 py-8" aria-label="All tools">
-        <Reveal>
-          <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white">Every tool on one page</h2>
-          <ToolGrid />
-        </Reveal>
+        <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white">Every tool on the desk</h2>
+        <ToolGrid />
         <p className="mt-6 flex flex-wrap gap-2 text-sm font-semibold">
-          <Link href="/guides" className="inline-flex min-h-[44px] items-center rounded-lg border-2 border-[#99f6e4] px-4 py-2 text-[#0f766e] hover:bg-[#f0fdfa] dark:border-teal-900 dark:text-[#5eead4] dark:hover:bg-teal-950">Guides</Link>
-          <Link href="/pricing" className="inline-flex min-h-[44px] items-center rounded-lg border-2 border-[#99f6e4] px-4 py-2 text-[#0f766e] hover:bg-[#f0fdfa] dark:border-teal-900 dark:text-[#5eead4] dark:hover:bg-teal-950">Pricing</Link>
           <Link href="/jpg-to-pdf" className="inline-flex min-h-[44px] items-center rounded-lg border-2 border-[#99f6e4] px-4 py-2 text-[#0f766e] hover:bg-[#f0fdfa] dark:border-teal-900 dark:text-[#5eead4] dark:hover:bg-teal-950">JPG to PDF</Link>
           <Link href="/photos-to-pdf-on-phone" className="inline-flex min-h-[44px] items-center rounded-lg border-2 border-[#99f6e4] px-4 py-2 text-[#0f766e] hover:bg-[#f0fdfa] dark:border-teal-900 dark:text-[#5eead4] dark:hover:bg-teal-950">Photos to PDF on your phone</Link>
           <Link href="/scan-to-pdf-free" className="inline-flex min-h-[44px] items-center rounded-lg border-2 border-[#99f6e4] px-4 py-2 text-[#0f766e] hover:bg-[#f0fdfa] dark:border-teal-900 dark:text-[#5eead4] dark:hover:bg-teal-950">Scan to PDF free</Link>
@@ -83,21 +53,21 @@ export default function Home() {
 
       <section className="mx-auto max-w-6xl px-4 py-12" aria-label="How it works">
         <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white">How it works</h2>
-        <Reveal>
-        <ol className="mt-6 grid gap-4 md:grid-cols-3">
+        <ol className="mt-6 space-y-4">
           {[
             { t: "Upload your file", d: "Drag it onto the tool page or pick it from your device. Nothing is installed." },
             { t: "Convert in your browser or on our server", d: "Browser tools never upload your file at all. Server tools process it in memory and never store it." },
             { t: "Download the result", d: "Save the converted file. Browser results are also kept on your device for 1-hour re-download; server files are gone when the response ends." },
           ].map((s, i) => (
-            <li key={s.t} className="rounded-2xl border border-[#99f6e4] bg-white p-5 dark:border-teal-900 dark:bg-slate-900">
-              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#0d9488] font-bold text-white" aria-hidden="true">{i + 1}</span>
-              <h3 className="mt-3 text-lg font-bold text-slate-900 dark:text-white">{s.t}</h3>
-              <p className="mt-1 text-slate-600 dark:text-slate-300">{s.d}</p>
+            <li key={s.t} className="flex gap-3 border-b border-dashed border-[#99f6e4] pb-4 dark:border-teal-800">
+              <span className="shrink-0 font-mono text-lg font-bold text-[#c2410c] dark:text-[#fb923c]" aria-hidden="true">{String(i + 1).padStart(2, "0")}.</span>
+              <div>
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white">{s.t}</h3>
+                <p className="mt-1 text-slate-600 dark:text-slate-300">{s.d}</p>
+              </div>
             </li>
           ))}
         </ol>
-        </Reveal>
       </section>
 
       <section className="mx-auto max-w-6xl px-4 py-8" aria-label="Why you can trust this site">
@@ -108,7 +78,7 @@ export default function Home() {
             { icon: <Trash2 size={26} aria-hidden="true" />, t: "Nothing kept behind your back", d: "No public file listings, no file gallery, no reuse of your documents." },
           ].map((s, i) => (
             <Reveal key={s.t} delay={i * 0.03} className="h-full">
-            <div className="h-full rounded-2xl bg-white p-5 dark:bg-slate-900">
+            <div className="dog-ear h-full rounded-lg bg-white p-5 dark:bg-slate-900">
               <span className="text-[#0d9488] dark:text-[#5eead4]">{s.icon}</span>
               <h3 className="mt-2 text-lg font-bold text-slate-900 dark:text-white">{s.t}</h3>
               <p className="mt-1 text-slate-600 dark:text-slate-300">{s.d}</p>
@@ -145,14 +115,14 @@ export default function Home() {
         <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white">Our other projects</h2>
         <div className="mt-6 grid gap-4 sm:grid-cols-2">
           <Reveal className="h-full">
-          <a href={SISTER_SITE_URL} target="_blank" rel="noopener noreferrer" className="block h-full rounded-2xl border-2 border-[#99f6e4] bg-white p-6 hover:border-[#0d9488] dark:border-teal-900 dark:bg-slate-900">
+          <a href={SISTER_SITE_URL} target="_blank" rel="noopener noreferrer" className="block h-full rounded-lg border-2 border-[#99f6e4] bg-white p-6 hover:border-[#0d9488] dark:border-teal-900 dark:bg-slate-900">
             <Sparkles className="text-[#ea580c]" size={28} aria-hidden="true" />
             <h3 className="mt-3 text-xl font-bold text-slate-900 dark:text-white">AI Studio</h3>
             <p className="mt-1 text-slate-600 dark:text-slate-300">AI logo generation and AI photo enhancement, from the same team.</p>
           </a>
           </Reveal>
           <Reveal delay={0.03} className="h-full">
-          <a href={LEADSFORCEGEN_URL} target="_blank" rel="noopener noreferrer" className="block h-full rounded-2xl border-2 border-[#99f6e4] bg-white p-6 hover:border-[#0d9488] dark:border-teal-900 dark:bg-slate-900">
+          <a href={LEADSFORCEGEN_URL} target="_blank" rel="noopener noreferrer" className="block h-full rounded-lg border-2 border-[#99f6e4] bg-white p-6 hover:border-[#0d9488] dark:border-teal-900 dark:bg-slate-900">
             <Users className="text-[#ea580c]" size={28} aria-hidden="true" />
             <h3 className="mt-3 text-xl font-bold text-slate-900 dark:text-white">LeadsForceGen</h3>
             <p className="mt-1 text-slate-600 dark:text-slate-300">Find business leads for outreach, with a free daily tier.</p>
@@ -163,7 +133,7 @@ export default function Home() {
 
       <section className="mx-auto max-w-6xl px-4 pb-16" aria-label="Android app">
         <Reveal>
-        <div className="rounded-2xl border-2 border-[#99f6e4] bg-white p-6 dark:border-teal-900 dark:bg-slate-900">
+        <div className="rounded-lg border-2 border-[#99f6e4] bg-white p-6 dark:border-teal-900 dark:bg-slate-900">
           <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white">PDF Tools Hub on Android</h2>
           <p className="mt-2 text-slate-600 dark:text-slate-300">
             The Android app is this website in an app: the same PDF tools, the same login, the same data. Download the APK, allow install from unknown sources once on your phone, then sign in with your usual account.

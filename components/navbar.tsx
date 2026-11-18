@@ -1,15 +1,17 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { ChevronDown, FileText, ExternalLink } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ChevronDown, ExternalLink } from "lucide-react";
 import { TOOLS, SISTER_SITE_URL, LEADSFORCEGEN_URL } from "@/lib/site";
 import { ThemeToggle } from "./theme-toggle";
+import { LogoMark } from "./logo-mark";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export function Navbar() {
   const [open, setOpen] = useState(false);
   const [signedIn, setSignedIn] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
   // Supabase session state (browser client) + a server-resolved admin flag
   // from /api/account/me. The Admin link is display-only: every admin page
   // and API route re-checks role + TOTP server-side regardless.
@@ -30,21 +32,37 @@ export function Navbar() {
     const { data: listener } = supabase.auth.onAuthStateChange(() => void refresh());
     return () => listener.subscription.unsubscribe();
   }, []);
+  // Close the Tools menu on Escape or a click/tap outside it.
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
+    const onDown = (e: MouseEvent | TouchEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("keydown", onKey);
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("touchstart", onDown);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("touchstart", onDown);
+    };
+  }, [open ]);
   return (
     <header className="sticky top-0 z-40 border-b-2 border-[#99f6e4] bg-white dark:border-teal-900 dark:bg-slate-950">
       <nav className="relative mx-auto flex max-w-6xl items-center justify-between gap-1 px-3 py-2 sm:gap-3 sm:px-4 sm:py-3" aria-label="Main navigation">
-        <Link href="/" className="flex min-h-[44px] shrink-0 items-center gap-1.5 whitespace-nowrap text-base font-extrabold text-[#0f766e] sm:gap-2 sm:text-xl dark:text-[#5eead4]">
-          <FileText size={22} aria-hidden="true" />
+        <Link href="/" className="flex min-h-[44px] shrink-0 items-center gap-2 whitespace-nowrap text-base font-extrabold text-[#0f766e] sm:text-xl dark:text-[#5eead4]">
+          <LogoMark size={30} />
           <span>PDF Tools Hub</span>
         </Link>
         <div className="flex items-center gap-1">
-          <div className="sm:relative">
+          <div className="sm:relative" ref={menuRef}>
             <button type="button" aria-expanded={open} aria-haspopup="true" onClick={() => setOpen((v) => !v)}
               className="flex min-h-[44px] items-center gap-1 whitespace-nowrap rounded-lg px-2 py-2 font-semibold text-slate-700 hover:bg-[#f0fdfa] sm:px-3 dark:text-slate-200 dark:hover:bg-teal-950">
               <span className="sm:hidden">Tools</span><span className="hidden sm:inline">More tools</span> <ChevronDown size={18} aria-hidden="true" className="hidden sm:block" />
             </button>
             {open && (
-              <div className="absolute left-3 right-3 top-full mt-1 rounded-xl border-2 border-[#99f6e4] bg-white p-2 shadow-none sm:left-auto sm:right-0 sm:w-72 dark:border-teal-900 dark:bg-slate-900" role="menu">
+              <div className="absolute left-3 right-3 top-full mt-1 max-h-[70vh] overflow-y-auto rounded-xl border-2 border-[#99f6e4] bg-white p-2 shadow-none sm:left-auto sm:right-0 sm:w-72 dark:border-teal-900 dark:bg-slate-900" role="menu">
                 {TOOLS.map((t) => (
                   <Link key={t.slug} href={`/${t.slug}`} role="menuitem" onClick={() => setOpen(false)}
                     className="block min-h-[44px] rounded-lg px-3 py-2.5 font-medium text-slate-700 hover:bg-[#f0fdfa] dark:text-slate-200 dark:hover:bg-teal-950">
@@ -61,6 +79,8 @@ export function Navbar() {
               </div>
             )}
           </div>
+          <Link href="/pricing" className="hidden min-h-[44px] items-center rounded-lg px-3 py-2 font-semibold text-slate-700 hover:bg-[#f0fdfa] md:flex dark:text-slate-200 dark:hover:bg-teal-950">Pricing</Link>
+          <Link href="/guides" className="hidden min-h-[44px] items-center rounded-lg px-3 py-2 font-semibold text-slate-700 hover:bg-[#f0fdfa] md:flex dark:text-slate-200 dark:hover:bg-teal-950">Guides</Link>
           <Link href="/about" className="hidden min-h-[44px] items-center rounded-lg px-3 py-2 font-semibold text-slate-700 hover:bg-[#f0fdfa] sm:flex dark:text-slate-200 dark:hover:bg-teal-950">About</Link>
           {signedIn ? (
             <>

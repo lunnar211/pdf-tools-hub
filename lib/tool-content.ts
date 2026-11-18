@@ -1,11 +1,13 @@
+export type ToolFamily = "convert" | "organise" | "image";
+
 export type ToolContent = {
-  slug: string; title: string; description: string; meta: string;
+  slug: string; title: string; family: ToolFamily; description: string; meta: string;
   accept: string; multiple: boolean; fieldName: string; endpoint: string; resultLabel: string;
   howTo: string[]; useCases: string[]; faqs: { q: string; a: string }[]; note: string; limits: string;
 };
 export const TOOL_CONTENT: Record<string, ToolContent> = {
   "pdf-to-word": {
-    slug: "pdf-to-word", title: "PDF to Word", meta: "Convert a PDF into an editable Word document, free. Text is preserved; layout is approximated.",
+    slug: "pdf-to-word", family: "convert", title: "PDF to Word", meta: "Convert a PDF into an editable Word document, free. Text is preserved; layout is approximated.",
     description: "Turn a PDF back into a document you can edit. Upload a PDF and get a real .docx file with its text organised into paragraphs and headings, ready to open in Word or Google Docs.",
     accept: ".pdf,application/pdf", multiple: false, fieldName: "file", endpoint: "/api/pdf-to-word", resultLabel: "Your Word document",
     howTo: ["Upload your PDF file (up to 25 MB).", "Click Convert and wait for the text extraction to finish.", "Download the .docx file and edit it in Word or Google Docs."],
@@ -19,7 +21,7 @@ export const TOOL_CONTENT: Record<string, ToolContent> = {
     limits: "PDF up to 25 MB. Free tier: around 20 conversions a day for guests (fair-use guideline).",
   },
   "edit-pdf-text": {
-    slug: "edit-pdf-text", title: "Edit PDF text", meta: "Edit text in a PDF free, in your browser. Click any line, change the words, keep the same layout.",
+    slug: "edit-pdf-text", family: "organise", title: "Edit PDF text", meta: "Edit text in a PDF free, in your browser. Click any line, change the words, keep the same layout.",
     description: "Fix a typo without rebuilding the whole document. Upload a PDF, click any line of text, type the correction in place, and download the edited PDF — the text stays where it was, at the same size.",
     accept: ".pdf,application/pdf", multiple: false, fieldName: "file", endpoint: "", resultLabel: "Your edited PDF",
     howTo: ["Upload your PDF (up to 25 MB).", "Click any line of text and type your correction — the line stays in the same place.", "Click Download edited PDF and save the fixed file."],
@@ -34,7 +36,7 @@ export const TOOL_CONTENT: Record<string, ToolContent> = {
     limits: "PDF up to 25 MB, first 30 pages. Free tier: around 20 conversions a day for guests (fair-use guideline).",
   },
   "word-to-pdf": {
-    slug: "word-to-pdf", title: "Word to PDF", meta: "Convert a Word document to PDF free. Headings, bold and italic text are kept; complex layout is simplified.",
+    slug: "word-to-pdf", family: "convert", title: "Word to PDF", meta: "Convert a Word document to PDF free. Headings, bold and italic text are kept; complex layout is simplified.",
     description: "Share a Word document without worrying that fonts or formatting will shift on someone else's computer. This tool reads your .docx file and renders a clean PDF from its headings, paragraphs, bold and italic text.",
     accept: ".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document", multiple: false, fieldName: "file", endpoint: "/api/word-to-pdf", resultLabel: "Your PDF",
     howTo: ["Upload your .docx file (up to 25 MB).", "Click Convert.", "Download the PDF and share it anywhere — it will look the same on every device."],
@@ -48,7 +50,7 @@ export const TOOL_CONTENT: Record<string, ToolContent> = {
     limits: "Word (.docx) up to 25 MB. Free tier: around 20 conversions a day for guests (fair-use guideline).",
   },
   "image-to-pdf": {
-    slug: "image-to-pdf", title: "Image to PDF", meta: "Combine JPG, PNG, WebP, BMP and HEIC photos into one PDF, free — converted in your browser, with reorder, rotate and page options.",
+    slug: "image-to-pdf", family: "image", title: "Image to PDF", meta: "Combine JPG, PNG, WebP, BMP and HEIC photos into one PDF, free — converted in your browser, with reorder, rotate and page options.",
     description: "Turn photos or scanned pages into a single PDF — converted on your own device, so your images never leave the browser. Reorder with drag and drop, rotate sideways photos, and choose page size, layout and quality before you download.",
     accept: ".jpg,.jpeg,.png,.webp,.bmp,.heic,image/jpeg,image/png,image/webp,image/bmp,image/heic", multiple: true, fieldName: "files", endpoint: "/api/image-to-pdf", resultLabel: "Your PDF",
     howTo: ["Add up to 20 JPG, PNG, WebP, BMP or HEIC images — drag to reorder, rotate any sideways photo.", "Choose page size, orientation, margins, layout and quality. The estimated output size updates as you choose.", "Click Convert. Your PDF downloads straight from your browser — the files never leave your device."],
@@ -64,7 +66,7 @@ export const TOOL_CONTENT: Record<string, ToolContent> = {
     limits: "Images up to 10 MB each, max 20 per conversion. Free tier: around 20 conversions a day for guests (fair-use guideline).",
   },
   "merge-pdf": {
-    slug: "merge-pdf", title: "Merge PDF", meta: "Merge several PDFs into one file free, in the order you choose. Each file up to 25 MB.",
+    slug: "merge-pdf", family: "organise", title: "Merge PDF", meta: "Merge several PDFs into one file free, in the order you choose. Each file up to 25 MB.",
     description: "Combine separate PDFs into one document. Upload two or more PDFs and they are joined in the order you select, so a cover letter, CV and certificates can travel as a single file.",
     accept: ".pdf,application/pdf", multiple: true, fieldName: "files", endpoint: "/api/merge-pdf", resultLabel: "Your merged PDF",
     howTo: ["Upload two or more PDF files, in the order you want them joined.", "Click Convert.", "Download the single merged PDF."],
@@ -72,13 +74,13 @@ export const TOOL_CONTENT: Record<string, ToolContent> = {
     faqs: [
       { q: "Does merging change my pages?", a: "No. Pages are copied in order, unchanged. Bookmarks and form fields are not carried over." },
       { q: "How many PDFs can I merge at once?", a: "Up to 20 files per conversion, each up to 25 MB." },
-      { q: "Can I reorder pages after uploading?", a: "The merged order follows the order you select the files in. Re-select in the right order if you need a different sequence." },
+      { q: "Can I reorder files after uploading?", a: "Yes. Drag the files into the order you want, or use the up/down buttons next to each file. The merged PDF follows that order exactly." },
     ],
     note: "Pages are copied unchanged and in order; bookmarks and interactive form fields are not preserved.",
     limits: "2 to 20 PDFs per request, each up to 25 MB. Free tier: around 20 conversions a day for guests (fair-use guideline).",
   },
   "split-pdf": {
-    slug: "split-pdf", title: "Split PDF", meta: "Split a PDF by page ranges free, for example 1-3,5. Get one PDF per range in a ZIP file.",
+    slug: "split-pdf", family: "organise", title: "Split PDF", meta: "Split a PDF by page ranges free, for example 1-3,5. Get one PDF per range in a ZIP file.",
     description: "Pull just the pages you need out of a long PDF. Tell the tool which ranges to keep — for example 1-3,5 — and you get a ZIP file with one PDF per range, so you can share or file a single chapter without sending the whole document.",
     accept: ".pdf,application/pdf", multiple: false, fieldName: "file", endpoint: "/api/split-pdf", resultLabel: "Your ZIP of split PDFs",
     howTo: ["Upload your PDF (up to 25 MB).", "Type the page ranges you want, for example 1-3,5.", "Click Convert and download the ZIP with one PDF per range."],
@@ -92,7 +94,7 @@ export const TOOL_CONTENT: Record<string, ToolContent> = {
     limits: "PDF up to 25 MB. Free tier: around 20 conversions a day for guests (fair-use guideline).",
   },
   "compress-pdf": {
-    slug: "compress-pdf", title: "Compress PDF", meta: "Compress a PDF free to make it smaller for email and uploads. Best-effort compression; input and output sizes are shown.",
+    slug: "compress-pdf", family: "organise", title: "Compress PDF", meta: "Compress a PDF free to make it smaller for email and uploads. Best-effort compression; input and output sizes are shown.",
     description: "Shrink a PDF that is too large to email or upload. The file is re-saved with compressed object streams, and the page shows you the before and after sizes so you can judge the result honestly.",
     accept: ".pdf,application/pdf", multiple: false, fieldName: "file", endpoint: "/api/compress-pdf", resultLabel: "Your compressed PDF",
     howTo: ["Upload your PDF (up to 25 MB).", "Click Convert.", "Compare the input and output sizes shown, then download the smaller file."],
@@ -106,7 +108,7 @@ export const TOOL_CONTENT: Record<string, ToolContent> = {
     limits: "PDF up to 25 MB. Free tier: around 20 conversions a day for guests (fair-use guideline).",
   },
   "pdf-to-jpg": {
-    slug: "pdf-to-jpg", title: "PDF to JPG", meta: "Convert PDF pages to JPG images free, in your browser. One page becomes one JPG; multi-page PDFs download as a ZIP.",
+    slug: "pdf-to-jpg", family: "image", title: "PDF to JPG", meta: "Convert PDF pages to JPG images free, in your browser. One page becomes one JPG; multi-page PDFs download as a ZIP.",
     description: "Turn PDF pages into JPG images you can share, print or insert into documents. Conversion runs in your browser, so your file never leaves the device. A single-page PDF downloads as one JPG; a longer PDF downloads as a ZIP of numbered page images.",
     accept: ".pdf,application/pdf", multiple: false, fieldName: "file", endpoint: "", resultLabel: "Your JPG images",
     howTo: ["Upload your PDF (up to 25 MB).", "Choose image detail and JPG quality.", "Click Convert to JPG and download the image or ZIP."],
@@ -120,7 +122,7 @@ export const TOOL_CONTENT: Record<string, ToolContent> = {
     limits: "PDF up to 25 MB. Free tier: around 20 conversions a day for guests (fair-use guideline).",
   },
   "rotate-pdf": {
-    slug: "rotate-pdf", title: "Rotate PDF", meta: "Rotate PDF pages free, in your browser. Fix sideways or upside-down pages one by one.",
+    slug: "rotate-pdf", family: "organise", title: "Rotate PDF", meta: "Rotate PDF pages free, in your browser. Fix sideways or upside-down pages one by one.",
     description: "Fix a PDF where some pages are sideways or upside down. Every page is shown as a thumbnail; set the rotation for each page that needs it, then save a corrected PDF — all in your browser.",
     accept: ".pdf,application/pdf", multiple: false, fieldName: "file", endpoint: "", resultLabel: "Your rotated PDF",
     howTo: ["Upload your PDF (up to 25 MB).", "Set 90°, 180° or 270° on the pages that are wrong.", "Click Save rotated PDF and download the fixed file."],
@@ -134,7 +136,7 @@ export const TOOL_CONTENT: Record<string, ToolContent> = {
     limits: "PDF up to 25 MB. Free tier: around 20 conversions a day for guests (fair-use guideline).",
   },
   "organize-pages": {
-    slug: "organize-pages", title: "Organize PDF pages", meta: "Delete and reorder PDF pages free, in your browser. Drag pages into the order you want.",
+    slug: "organize-pages", family: "organise", title: "Organize PDF pages", meta: "Delete and reorder PDF pages free, in your browser. Drag pages into the order you want.",
     description: "Rearrange a PDF without re-scanning it. Drag page thumbnails into the order you want, tick Delete on pages you don't need, and save the result — all in your browser.",
     accept: ".pdf,application/pdf", multiple: false, fieldName: "file", endpoint: "", resultLabel: "Your reorganised PDF",
     howTo: ["Upload your PDF (up to 25 MB).", "Drag pages into order, or tick Delete on pages to drop.", "Click Save reorganised PDF and download the result."],
@@ -148,7 +150,7 @@ export const TOOL_CONTENT: Record<string, ToolContent> = {
     limits: "PDF up to 25 MB. Free tier: around 20 conversions a day for guests (fair-use guideline).",
   },
   "watermark-pdf": {
-    slug: "watermark-pdf", title: "Add watermark", meta: "Add a text watermark to a PDF free, in your browser. Diagonal, with adjustable strength, size and colour.",
+    slug: "watermark-pdf", family: "organise", title: "Add watermark", meta: "Add a text watermark to a PDF free, in your browser. Diagonal, with adjustable strength, size and colour.",
     description: "Stamp text diagonally across every page of a PDF — DRAFT, CONFIDENTIAL, or your own wording. Choose strength, size and colour, then download the watermarked file, all in your browser.",
     accept: ".pdf,application/pdf", multiple: false, fieldName: "file", endpoint: "", resultLabel: "Your watermarked PDF",
     howTo: ["Upload your PDF (up to 25 MB).", "Type the watermark text and choose strength, size and colour.", "Click Add watermark and download the result."],
@@ -162,7 +164,7 @@ export const TOOL_CONTENT: Record<string, ToolContent> = {
     limits: "PDF up to 25 MB. Free tier: around 20 conversions a day for guests (fair-use guideline).",
   },
   "page-numbers": {
-    slug: "page-numbers", title: "Add page numbers", meta: "Add page numbers to a PDF free, in your browser. Page X of Y at the foot of every page.",
+    slug: "page-numbers", family: "organise", title: "Add page numbers", meta: "Add page numbers to a PDF free, in your browser. Page X of Y at the foot of every page.",
     description: "Number every page of a PDF so readers can follow it — “Page 1 of 12”, “Page 2 of 12”, and so on. Choose the position, size, and the number the first page should show, then download, all in your browser.",
     accept: ".pdf,application/pdf", multiple: false, fieldName: "file", endpoint: "", resultLabel: "Your numbered PDF",
     howTo: ["Upload your PDF (up to 25 MB).", "Choose position, size, and the first page number.", "Click Add page numbers and download the result."],
@@ -176,7 +178,7 @@ export const TOOL_CONTENT: Record<string, ToolContent> = {
     limits: "PDF up to 25 MB. Free tier: around 20 conversions a day for guests (fair-use guideline).",
   },
   "ocr-pdf": {
-    slug: "ocr-pdf", title: "OCR: scanned PDF to searchable text", meta: "Make a scanned PDF searchable free, in your browser. English text recognition with a searchable PDF + extracted text.",
+    slug: "ocr-pdf", family: "convert", title: "OCR: scanned PDF to searchable text", meta: "Make a scanned PDF searchable free, in your browser. English text recognition with a searchable PDF + extracted text.",
     description: "Turn a scanned PDF into a searchable one. The pages are read on your device with Tesseract OCR, and you get back a PDF that looks the same but whose text can be searched and copied — plus the recognised text itself as a .txt file.",
     accept: ".pdf,application/pdf", multiple: false, fieldName: "file", endpoint: "", resultLabel: "Your searchable PDF",
     howTo: ["Upload your scanned PDF (up to 25 MB).", "Click Make searchable and wait while each page is read.", "Download the searchable PDF, and the recognised text as .txt if you want it."],

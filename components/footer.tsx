@@ -2,7 +2,25 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { SISTER_SITE_URL, LEADSFORCEGEN_URL, TOOLS } from "@/lib/site";
+import { LogoMark } from "./logo-mark";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+
+const COMPANY_LINKS = [
+  { href: "/about", label: "About" },
+  { href: "/contact", label: "Contact" },
+  { href: "/guides", label: "Guides" },
+  { href: "/pricing", label: "Pricing" },
+];
+const LEGAL_LINKS = [
+  { href: "/privacy", label: "Privacy" },
+  { href: "/terms", label: "Terms" },
+  { href: "/cookies", label: "Cookie Policy" },
+  { href: "/refund-policy", label: "Refund Policy" },
+  { href: "/acceptable-use", label: "Acceptable Use" },
+  { href: "/dmca", label: "DMCA" },
+  { href: "/disclaimer", label: "Disclaimer" },
+];
+
 export function Footer() {
   // The Admin link is hidden from visitors with no signed-in session
   // (same pattern as the navbar, which additionally requires the admin
@@ -25,10 +43,13 @@ export function Footer() {
   }, []);
   return (
     <footer className="border-t-2 border-[#99f6e4] bg-[#f0fdfa] dark:border-teal-900 dark:bg-slate-950">
-      <div className="mx-auto grid max-w-6xl gap-8 px-4 py-10 sm:grid-cols-3">
+      <div className="mx-auto grid max-w-6xl gap-8 px-4 py-10 sm:grid-cols-2 lg:grid-cols-4">
         <div>
-          <p className="text-lg font-extrabold text-[#0f766e] dark:text-[#5eead4]">PDF Tools Hub</p>
+          <p className="flex items-center gap-2 text-lg font-extrabold text-[#0f766e] dark:text-[#5eead4]">
+            <LogoMark size={28} /> PDF Tools Hub
+          </p>
           <p className="mt-2 text-slate-600 dark:text-slate-300">Free, everyday PDF tools. No account needed for the free tier. Files are processed in your browser or in memory on our server — never stored, never listed or shared.</p>
+          <p className="mt-3"><span className="stamp">NO WATERMARK</span> <span className="stamp stamp-orange">NEVER STORED</span></p>
         </div>
         <nav aria-label="PDF tools">
           <p className="font-bold text-slate-800 dark:text-slate-100">Tools</p>
@@ -38,25 +59,32 @@ export function Footer() {
             ))}
           </ul>
         </nav>
-        <nav aria-label="Site pages">
-          <p className="font-bold text-slate-800 dark:text-slate-100">More</p>
+        <nav aria-label="Company">
+          <p className="font-bold text-slate-800 dark:text-slate-100">Company</p>
           <ul className="mt-2 space-y-1">
-            <li><Link href="/about" className="inline-flex min-h-[44px] items-center text-[#0f766e] hover:underline dark:text-[#5eead4]">About</Link></li>
-            <li><Link href="/contact" className="inline-flex min-h-[44px] items-center text-[#0f766e] hover:underline dark:text-[#5eead4]">Contact</Link></li>
-            <li><Link href="/privacy" className="inline-flex min-h-[44px] items-center text-[#0f766e] hover:underline dark:text-[#5eead4]">Privacy</Link></li>
-            <li><Link href="/terms" className="inline-flex min-h-[44px] items-center text-[#0f766e] hover:underline dark:text-[#5eead4]">Terms</Link></li>
-            <li><Link href="/cookies" className="inline-flex min-h-[44px] items-center text-[#0f766e] hover:underline dark:text-[#5eead4]">Cookie Policy</Link></li>
-            <li><Link href="/refund-policy" className="inline-flex min-h-[44px] items-center text-[#0f766e] hover:underline dark:text-[#5eead4]">Refund Policy</Link></li>
-            <li><Link href="/acceptable-use" className="inline-flex min-h-[44px] items-center text-[#0f766e] hover:underline dark:text-[#5eead4]">Acceptable Use</Link></li>
-            <li><Link href="/dmca" className="inline-flex min-h-[44px] items-center text-[#0f766e] hover:underline dark:text-[#5eead4]">DMCA</Link></li>
-            <li><Link href="/disclaimer" className="inline-flex min-h-[44px] items-center text-[#0f766e] hover:underline dark:text-[#5eead4]">Disclaimer</Link></li>
+            {COMPANY_LINKS.map((l) => (
+              <li key={l.href}><Link href={l.href} className="inline-flex min-h-[44px] items-center text-[#0f766e] hover:underline dark:text-[#5eead4]">{l.label}</Link></li>
+            ))}
+          </ul>
+        </nav>
+        <nav aria-label="Legal">
+          <p className="font-bold text-slate-800 dark:text-slate-100">Legal</p>
+          <ul className="mt-2 space-y-1">
+            {LEGAL_LINKS.map((l) => (
+              <li key={l.href}><Link href={l.href} className="inline-flex min-h-[44px] items-center text-[#0f766e] hover:underline dark:text-[#5eead4]">{l.label}</Link></li>
+            ))}
             {signedIn && (
               <li><Link href="/admin" className="inline-flex min-h-[44px] items-center text-[#0f766e] hover:underline dark:text-[#5eead4]">Admin</Link></li>
             )}
-            <li><a href={SISTER_SITE_URL} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[44px] items-center text-[#0f766e] hover:underline dark:text-[#5eead4]">AI Studio (our other project)</a></li>
-            <li><a href={LEADSFORCEGEN_URL} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[44px] items-center text-[#0f766e] hover:underline dark:text-[#5eead4]">LeadsForceGen (our other project)</a></li>
           </ul>
         </nav>
+      </div>
+      <div className="border-t border-[#99f6e4] dark:border-teal-900">
+        <p className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-x-4 gap-y-1 px-4 py-4 text-center text-sm text-slate-600 dark:text-slate-400">
+          <span className="font-bold text-slate-800 dark:text-slate-100">Our other projects:</span>
+          <a href={SISTER_SITE_URL} target="_blank" rel="noopener noreferrer" className="text-[#0f766e] hover:underline dark:text-[#5eead4]">AI Studio</a>
+          <a href={LEADSFORCEGEN_URL} target="_blank" rel="noopener noreferrer" className="text-[#0f766e] hover:underline dark:text-[#5eead4]">LeadsForceGen</a>
+        </p>
       </div>
       <p className="border-t border-[#99f6e4] py-4 text-center text-sm text-slate-600 dark:border-teal-900 dark:text-slate-400">PDF Tools Hub. Free for guests: around 20 conversions a day as a fair-use guideline — sign in (free) for a tracked 100 a day.</p>
     </footer>

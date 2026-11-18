@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { ToolShell } from "./tool-shell";
+import { ToolMasthead } from "./tool-masthead";
 import { AdSlot } from "./ad-slot";
 import { Reveal } from "./motion/Reveal";
 import { PDF_KINDS } from "@/lib/file-detect";
@@ -10,11 +11,12 @@ export function toolMetadata(c: ToolContent): Metadata {
   return {
     title: `${c.title} — Free Online | PDF Tools Hub`,
     description: c.meta,
-    openGraph: { title: `${c.title} | PDF Tools Hub`, description: c.meta, type: "website", images: [{ url: `/og/${c.slug}.jpg`, width: 1200, height: 630 }] },
+    alternates: { canonical: `/${c.slug}` },
+    openGraph: { title: `${c.title} | PDF Tools Hub`, description: c.meta, type: "website", url: `/${c.slug}`, images: [{ url: `/og/${c.slug}.jpg`, width: 1200, height: 630 }] },
   };
 }
 
-export function ToolPage({ c, rangesField }: { c: ToolContent; rangesField?: boolean }) {
+export function ToolPage({ c, rangesField, reorderable, pageStrip }: { c: ToolContent; rangesField?: boolean; reorderable?: boolean; pageStrip?: boolean }) {
   const faqJson = {
     "@context": "https://schema.org", "@type": "FAQPage",
     mainEntity: c.faqs.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } })),
@@ -28,17 +30,13 @@ export function ToolPage({ c, rangesField }: { c: ToolContent; rangesField?: boo
     <main className="mx-auto max-w-4xl px-4 py-10">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJson) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(appJson) }} />
-      <Reveal>
-      <h1 className="text-3xl font-extrabold text-slate-900 sm:text-4xl dark:text-white">{c.title}</h1>
-      <p className="mt-3 max-w-2xl text-lg text-slate-600 dark:text-slate-300">{c.description}</p>
-      <p className="mt-2 text-sm font-medium text-slate-600 dark:text-slate-300">{c.limits}</p>
-      </Reveal>
-      <Reveal>
+      <ToolMasthead family={c.family} title={c.title} description={c.description} limits={c.limits} receipt={`${c.slug} · free · in your browser or in memory on our server`} />
       <div className="mt-6">
         <ToolShell endpoint={c.endpoint} accept={c.accept} multiple={c.multiple} fieldName={c.fieldName} resultLabel={c.resultLabel}
           toolSlug={c.slug as ToolSlug}
           allowedKinds={c.slug === "word-to-pdf" ? ["zip"] : PDF_KINDS}
           maxBytes={25 * 1024 * 1024} maxFiles={c.multiple ? 20 : 1}
+          reorderable={reorderable} pageStrip={pageStrip}
           extraFields={rangesField ? (
             <div className="mt-4">
               <label htmlFor="ranges" className="block font-bold text-slate-900 dark:text-white">Page ranges</label>
@@ -49,20 +47,22 @@ export function ToolPage({ c, rangesField }: { c: ToolContent; rangesField?: boo
           ) : undefined}
         />
       </div>
-      </Reveal>
-      <div className="mt-6 rounded-xl border-2 border-[#ea580c] bg-orange-50 p-4 text-slate-700 dark:border-orange-800 dark:bg-orange-950 dark:text-slate-200">
-        <p className="font-bold">Please note</p><p className="mt-1">{c.note}</p>
-      </div>
+      {/* Margin note (red pencil), not a card: what this tool can't do. */}
+      <aside className="margin-note mt-6 text-slate-700 dark:text-slate-200" aria-label="What this tool can't do">
+        <p className="font-mono text-xs font-bold uppercase tracking-widest text-[#c2410c] dark:text-[#fb923c]">Margin note — what this tool can&apos;t do</p>
+        <p className="mt-1">{c.note}</p>
+      </aside>
       <AdSlot />
       <section className="mt-10" aria-label="How to use this tool">
         <h2 className="text-2xl font-bold text-slate-900 dark:text-white">How it works</h2>
-        <Reveal>
         <ol className="mt-4 space-y-3">
           {c.howTo.map((s, i) => (
-            <li key={i} className="flex gap-3"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#0d9488] font-bold text-white" aria-hidden="true">{i + 1}</span><span className="pt-1 text-slate-700 dark:text-slate-200">{s}</span></li>
+            <li key={i} className="flex gap-3">
+              <span className="shrink-0 font-mono text-sm font-bold text-[#c2410c] dark:text-[#fb923c]" aria-hidden="true">{String(i + 1).padStart(2, "0")}.</span>
+              <span className="pt-0.5 text-slate-700 dark:text-slate-200">{s}</span>
+            </li>
           ))}
         </ol>
-        </Reveal>
       </section>
       <section className="mt-10" aria-label="Good uses for this tool">
         <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Good uses</h2>

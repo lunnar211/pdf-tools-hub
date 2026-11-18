@@ -3,11 +3,19 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { LANDINGS } from "@/lib/landings";
 import { TOOLS } from "@/lib/site";
+import { ToolMasthead } from "./tool-masthead";
 
 export function landingMetadata(slug: string): Metadata {
   const l = LANDINGS.find((x) => x.slug === slug);
   if (!l) return {};
-  return { title: `${l.title} | PDF Tools Hub`, description: l.meta, openGraph: { title: `${l.title} | PDF Tools Hub`, description: l.meta, type: "website", images: [{ url: `/og/${slug}.jpg`, width: 1200, height: 630 }] } };
+  // All four landings are the same Image to PDF tool — canonicalise to
+  // the real tool page so the landings don't compete with each other.
+  return {
+    title: `${l.title} | PDF Tools Hub`,
+    description: l.meta,
+    alternates: { canonical: `/${l.toolSlug}` },
+    openGraph: { title: `${l.title} | PDF Tools Hub`, description: l.meta, type: "website", url: `/${l.toolSlug}`, images: [{ url: `/og/${slug}.jpg`, width: 1200, height: 630 }] },
+  };
 }
 
 export function LandingPage({ slug }: { slug: string }) {
@@ -26,8 +34,7 @@ export function LandingPage({ slug }: { slug: string }) {
   return (
     <main className="mx-auto max-w-4xl px-4 py-10">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJson) }} />
-      <h1 className="text-3xl font-extrabold text-slate-900 sm:text-4xl dark:text-white">{l.hero}</h1>
-      <p className="mt-3 max-w-2xl text-lg text-slate-600 dark:text-slate-300">{l.intro}</p>
+      <ToolMasthead family="image" title={l.hero} description={l.intro} limits="Images up to 10 MB each, max 20 per conversion. Free tier: around 20 conversions a day for guests (fair-use guideline)." receipt={`${l.slug} · same tool as image-to-pdf · canonical: /image-to-pdf`} />
       <div className="mt-6">
         <Link
           href={`/${l.toolSlug}`}

@@ -7,7 +7,7 @@ import { LANDINGS } from "@/lib/landings";
 export default function sitemap(): MetadataRoute.Sitemap {
   const pages = [
     "", "about", "contact", "privacy", "terms", "disclaimer", "cookies",
-    "refund-policy", "acceptable-use", "dmca", "pricing", "guides",
+    "refund-policy", "acceptable-use", "dmca", "pricing", "guides", "faq",
     ...TOOLS.map((t) => t.slug),
     ...GUIDES.map((g) => `guides/${g.slug}`),
     ...LANDINGS.map((l) => l.slug),

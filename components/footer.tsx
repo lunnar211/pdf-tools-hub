@@ -9,6 +9,7 @@ const COMPANY_LINKS = [
   { href: "/about", label: "About" },
   { href: "/contact", label: "Contact" },
   { href: "/guides", label: "Guides" },
+  { href: "/faq", label: "FAQ" },
   { href: "/pricing", label: "Pricing" },
 ];
 const LEGAL_LINKS = [

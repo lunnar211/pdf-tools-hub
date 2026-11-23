@@ -81,6 +81,7 @@ export function Navbar() {
           </div>
           <Link href="/pricing" className="hidden min-h-[44px] items-center rounded-lg px-3 py-2 font-semibold text-slate-700 hover:bg-[#f0fdfa] md:flex dark:text-slate-200 dark:hover:bg-teal-950">Pricing</Link>
           <Link href="/guides" className="hidden min-h-[44px] items-center rounded-lg px-3 py-2 font-semibold text-slate-700 hover:bg-[#f0fdfa] md:flex dark:text-slate-200 dark:hover:bg-teal-950">Guides</Link>
+          <Link href="/faq" className="hidden min-h-[44px] items-center rounded-lg px-3 py-2 font-semibold text-slate-700 hover:bg-[#f0fdfa] md:flex dark:text-slate-200 dark:hover:bg-teal-950">FAQ</Link>
           <Link href="/about" className="hidden min-h-[44px] items-center rounded-lg px-3 py-2 font-semibold text-slate-700 hover:bg-[#f0fdfa] sm:flex dark:text-slate-200 dark:hover:bg-teal-950">About</Link>
           {signedIn ? (
             <>

@@ -31,6 +31,19 @@ const nextConfig: NextConfig = {
       "*.css": { loaders: ["@tailwindcss/turbopack"], as: "*.css" },
     },
   },
+  // /jpg-to-pdf was a duplicate landing page for the same job as
+  // /image-to-pdf (both point at the Image to PDF tool). The route is
+  // merged into the tool page; the permanent redirect keeps old links
+  // and search rankings working.
+  async redirects() {
+    return [
+      {
+        source: "/jpg-to-pdf",
+        destination: "/image-to-pdf",
+        permanent: true,
+      },
+    ];
+  },
   async headers() {
     return [
       {

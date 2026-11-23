@@ -44,7 +44,7 @@ export default function Home() {
         <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white">Every tool on the desk</h2>
         <ToolGrid />
         <p className="mt-6 flex flex-wrap gap-2 text-sm font-semibold">
-          <Link href="/jpg-to-pdf" className="inline-flex min-h-[44px] items-center rounded-lg border-2 border-[#99f6e4] px-4 py-2 text-[#0f766e] hover:bg-[#f0fdfa] dark:border-teal-900 dark:text-[#5eead4] dark:hover:bg-teal-950">JPG to PDF</Link>
+          <Link href="/image-to-pdf" className="inline-flex min-h-[44px] items-center rounded-lg border-2 border-[#99f6e4] px-4 py-2 text-[#0f766e] hover:bg-[#f0fdfa] dark:border-teal-900 dark:text-[#5eead4] dark:hover:bg-teal-950">JPG to PDF</Link>
           <Link href="/photos-to-pdf-on-phone" className="inline-flex min-h-[44px] items-center rounded-lg border-2 border-[#99f6e4] px-4 py-2 text-[#0f766e] hover:bg-[#f0fdfa] dark:border-teal-900 dark:text-[#5eead4] dark:hover:bg-teal-950">Photos to PDF on your phone</Link>
           <Link href="/scan-to-pdf-free" className="inline-flex min-h-[44px] items-center rounded-lg border-2 border-[#99f6e4] px-4 py-2 text-[#0f766e] hover:bg-[#f0fdfa] dark:border-teal-900 dark:text-[#5eead4] dark:hover:bg-teal-950">Scan to PDF free</Link>
         </p>

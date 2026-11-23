@@ -14,27 +14,6 @@ export type Landing = {
 
 export const LANDINGS: Landing[] = [
   {
-    slug: "jpg-to-pdf",
-    title: "JPG to PDF — convert JPG images to PDF free",
-    meta: "Convert JPG to PDF free, in your browser. Combine JPG photos into one PDF with reorder, rotate, and page options — no upload needed.",
-    hero: "JPG to PDF, free — in your browser",
-    intro:
-      "Turn JPG photos into a single PDF without uploading them anywhere. The conversion runs on your device, so your pictures never leave the browser — and you can reorder them, rotate sideways shots, and pick page size and quality before downloading.",
-    points: [
-      "JPG, PNG, WebP, BMP, and HEIC supported",
-      "Drag to reorder; rotate any photo",
-      "A4, Letter, A3, or fit-to-image pages",
-      "Estimated size before you download",
-    ],
-    faqs: [
-      { q: "Is JPG to PDF really free?", a: "Yes. Guests get around 20 conversions a day as a fair-use guideline; signing in (free) raises that to 100 a day. No watermark is added to your PDF." },
-      { q: "Do my JPGs get uploaded?", a: "No. Conversion runs in your browser with pdf-lib. Only if your browser cannot decode a JPG does the page offer a server fallback, which processes the file in memory and never stores it." },
-      { q: "Can I combine JPGs with PNGs?", a: "Yes — mix JPG, PNG, WebP, BMP, and HEIC in one conversion, in any order." },
-    ],
-    toolSlug: "image-to-pdf",
-    toolLabel: "Convert JPG to PDF",
-  },
-  {
     slug: "photos-to-pdf-on-phone",
     title: "Photos to PDF on your phone — free, no app needed",
     meta: "Turn phone photos into a PDF on your phone, free, with no app to install. Capture with the camera, fix rotation, and download one PDF.",

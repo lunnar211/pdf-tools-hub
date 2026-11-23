@@ -42,7 +42,7 @@ export function ToolShell({
   const [phase, setPhase] = useState<Phase>("idle");
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState("");
-  const [result, setResult] = useState<{ url: string; name: string; size: number; inputSize: number } | null>(null);
+  const [result, setResult] = useState<{ url: string; name: string; size: number; inputSize: number; imagesDownsampled?: number } | null>(null);
   const [counterKey, setCounterKey] = useState(0);
   const [dragId, setDragId] = useState<number | null>(null);
   const [pageCount, setPageCount] = useState<number | null>(null);
@@ -144,12 +144,14 @@ export function ToolShell({
         const match = /filename="([^"]+)"/.exec(disp);
         const name = match?.[1] || resultLabel;
         const inBytes = Number(xhr.getResponseHeader("X-Input-Bytes") || 0);
+        const downsampled = Number(xhr.getResponseHeader("X-Images-Downsampled") || 0);
         const url = URL.createObjectURL(blob);
         setResult({
           url,
           name,
           size: blob.size,
           inputSize: inBytes || files.reduce((s, f) => s + f.size, 0),
+          imagesDownsampled: downsampled,
         });
         setPhase("done");
         setProgress(100);
@@ -313,6 +315,12 @@ export function ToolShell({
                 {" "}
                 — down from {formatBytes(result.inputSize)} (
                 {Math.max(0, Math.round((1 - result.size / result.inputSize) * 100))}% smaller)
+                {result.imagesDownsampled !== undefined && result.imagesDownsampled > 0 && (
+                  <>
+                    {" · "}
+                    {result.imagesDownsampled} {result.imagesDownsampled === 1 ? "image" : "images"} downsampled
+                  </>
+                )}
               </>
             )}
           </p>

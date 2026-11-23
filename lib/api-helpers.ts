@@ -13,7 +13,10 @@ export async function rateLimitGuard(req: Request): Promise<Response | null> {
   return null;
 }
 
-export async function getFiles(req: Request, field: string): Promise<{ files: File[]; error: Response | null }> {
+export async function getFiles(
+  req: Request,
+  field: string,
+): Promise<{ files: File[]; error: Response | null; form?: FormData }> {
   let form: FormData;
   try {
     form = await req.formData();
@@ -22,7 +25,7 @@ export async function getFiles(req: Request, field: string): Promise<{ files: Fi
   }
   const files = form.getAll(field).filter((v): v is File => v instanceof File && v.size > 0);
   if (files.length === 0) return { files: [], error: errorResponse("No file was uploaded.", 400) };
-  return { files, error: null };
+  return { files, error: null, form };
 }
 
 export function genericError(): Response {

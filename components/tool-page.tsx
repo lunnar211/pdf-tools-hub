@@ -16,7 +16,7 @@ export function toolMetadata(c: ToolContent): Metadata {
   };
 }
 
-export function ToolPage({ c, rangesField, reorderable, pageStrip }: { c: ToolContent; rangesField?: boolean; reorderable?: boolean; pageStrip?: boolean }) {
+export function ToolPage({ c, rangesField, downsampleField, reorderable, pageStrip }: { c: ToolContent; rangesField?: boolean; downsampleField?: boolean; reorderable?: boolean; pageStrip?: boolean }) {
   const faqJson = {
     "@context": "https://schema.org", "@type": "FAQPage",
     mainEntity: c.faqs.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } })),
@@ -26,6 +26,25 @@ export function ToolPage({ c, rangesField, reorderable, pageStrip }: { c: ToolCo
     name: `PDF Tools Hub — ${c.title}`, applicationCategory: "UtilitiesApplication", operatingSystem: "Web",
     offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
   };
+  const extraFields = rangesField ? (
+    <div className="mt-4">
+      <label htmlFor="ranges" className="block font-bold text-slate-900 dark:text-white">Page ranges</label>
+      <input id="ranges" name="ranges" required placeholder="Example: 1-3,5" inputMode="text" autoComplete="off"
+        className="mt-1 min-h-[44px] w-full rounded-lg border-2 border-[#99f6e4] bg-white px-3 py-2 text-slate-900 dark:border-teal-800 dark:bg-slate-800 dark:text-white" />
+      <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Numbers, dashes for a span, commas between ranges. Example: 1-3,5</p>
+    </div>
+  ) : downsampleField ? (
+    <div className="mt-4">
+      <label htmlFor="downsample" className="block font-bold text-slate-900 dark:text-white">Image quality</label>
+      <select id="downsample" name="downsample" defaultValue="off"
+        className="mt-1 min-h-[44px] w-full rounded-lg border-2 border-[#99f6e4] bg-white px-3 py-2 text-slate-900 dark:border-teal-800 dark:bg-slate-800 dark:text-white">
+        <option value="off">Keep images as they are</option>
+        <option value="150">Smaller images — max 150 DPI (good for email)</option>
+        <option value="72">Smallest images — max 72 DPI (smallest file)</option>
+      </select>
+      <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Large JPEG photos are resized to the DPI you pick; other images are left as they are. Text and layout never change.</p>
+    </div>
+  ) : undefined;
   return (
     <main className="mx-auto max-w-4xl px-4 py-10">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJson) }} />
@@ -37,14 +56,7 @@ export function ToolPage({ c, rangesField, reorderable, pageStrip }: { c: ToolCo
           allowedKinds={c.slug === "word-to-pdf" ? ["zip"] : PDF_KINDS}
           maxBytes={25 * 1024 * 1024} maxFiles={c.multiple ? 20 : 1}
           reorderable={reorderable} pageStrip={pageStrip}
-          extraFields={rangesField ? (
-            <div className="mt-4">
-              <label htmlFor="ranges" className="block font-bold text-slate-900 dark:text-white">Page ranges</label>
-              <input id="ranges" name="ranges" required placeholder="Example: 1-3,5" inputMode="text" autoComplete="off"
-                className="mt-1 min-h-[44px] w-full rounded-lg border-2 border-[#99f6e4] bg-white px-3 py-2 text-slate-900 dark:border-teal-800 dark:bg-slate-800 dark:text-white" />
-              <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Numbers, dashes for a span, commas between ranges. Example: 1-3,5</p>
-            </div>
-          ) : undefined}
+          extraFields={extraFields}
         />
       </div>
       {/* Margin note (red pencil), not a card: what this tool can't do. */}

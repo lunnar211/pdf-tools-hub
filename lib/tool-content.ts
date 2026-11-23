@@ -95,16 +95,17 @@ export const TOOL_CONTENT: Record<string, ToolContent> = {
   },
   "compress-pdf": {
     slug: "compress-pdf", family: "organise", title: "Compress PDF", meta: "Compress a PDF free to make it smaller for email and uploads. Best-effort compression; input and output sizes are shown.",
-    description: "Shrink a PDF that is too large to email or upload. The file is re-saved with compressed object streams, and the page shows you the before and after sizes so you can judge the result honestly.",
+    description: "Shrink a PDF that is too large to email or upload. The file is re-saved with compressed object streams, and you can also downsample large photos inside it — the page shows you the before and after sizes, and how many images were downsampled, so you can judge the result honestly.",
     accept: ".pdf,application/pdf", multiple: false, fieldName: "file", endpoint: "/api/compress-pdf", resultLabel: "Your compressed PDF",
-    howTo: ["Upload your PDF (up to 25 MB).", "Click Convert.", "Compare the input and output sizes shown, then download the smaller file."],
+    howTo: ["Upload your PDF (up to 25 MB).", "Choose image quality — keep images as they are, or downsample large photos to 150 DPI (good for email) or 72 DPI (smallest file).", "Click Convert.", "Compare the input and output sizes shown, then download the smaller file."],
     useCases: ["Fitting a PDF under an email attachment limit", "Uploading a document to a portal with a strict size cap", "Saving storage space on a large report"],
     faqs: [
-      { q: "How much smaller will my PDF get?", a: "It depends on the file. PDFs that are already compressed may shrink very little; uncompressed or bloated files shrink more. The result page always shows both sizes." },
-      { q: "Is this as strong as desktop compression tools?", a: "No. This is best-effort compression, not Ghostscript-level recompression. Images are not downsampled, so image-heavy PDFs change the least." },
-      { q: "Does compression change how pages look?", a: "No. Pages, text and images are kept as they are; only the file's internal storage is tightened." },
+      { q: "How much smaller will my PDF get?", a: "It depends on the file. PDFs that are already compressed may shrink very little; uncompressed or bloated files shrink more. Downsampling large photos to 150 DPI usually shrinks image-heavy PDFs a lot. The result page always shows both sizes." },
+      { q: "Is this as strong as desktop compression tools?", a: "No. This is best-effort compression, not Ghostscript-level recompression. With image downsampling on, large JPEG photos are resized to 150 or 72 DPI; other image types are left as they are." },
+      { q: "Which images get downsampled?", a: "Only JPEG photos (and plain RGB or grayscale images) drawn larger than the DPI you pick. Images with transparency, fax-style scans and JPEG 2000 images are left untouched, and the result page tells you how many images were actually downsampled." },
+      { q: "Does compression change how pages look?", a: "Text and layout never change. Downsampled photos lose some fine detail if you zoom right in — at normal reading size they look the same." },
     ],
-    note: "Best-effort compression only (not Ghostscript-level). Images are not downsampled. Input vs output size is reported in the UI.",
+    note: "Best-effort compression only (not Ghostscript-level). Optional image downsampling: large JPEG photos to 150 or 72 DPI; other images untouched. Input vs output size is reported in the UI.",
     limits: "PDF up to 25 MB. Free tier: around 20 conversions a day for guests (fair-use guideline).",
   },
   "pdf-to-jpg": {
